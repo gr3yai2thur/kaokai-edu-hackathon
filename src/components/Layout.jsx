@@ -1,5 +1,11 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut, Award } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut, Award, Star, Zap } from 'lucide-react';
+
+const BADGE_META = {
+  badge_scholar: { label: 'Scholar', icon: BookOpen, cls: 'bg-blue-50 text-blue-600' },
+  badge_achiever: { label: 'Achiever', icon: Award, cls: 'bg-amber-50 text-amber-600' },
+  badge_elite: { label: 'Elite', icon: Star, cls: 'bg-violet-50 text-violet-600' },
+};
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
@@ -72,6 +78,20 @@ export default function Layout() {
                   <span className="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-lg">VIP</span>
                 )}
               </div>
+              {profile?.badges?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {profile.badges.map(id => {
+                    const m = BADGE_META[id];
+                    if (!m) return null;
+                    const Icon = m.icon;
+                    return (
+                      <span key={id} className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium ${m.cls}`} title={m.label}>
+                        <Icon className="w-3 h-3" />{m.label}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
           <button
