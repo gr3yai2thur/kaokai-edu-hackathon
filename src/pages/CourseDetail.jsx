@@ -30,6 +30,10 @@ export default function CourseDetail() {
 
   const course = allCourses?.find(c => c.course_id === id);
 
+  if (allCourses === null) {
+    return <div className="p-6 text-center py-20 text-slate-400">กำลังโหลด...</div>;
+  }
+
   if (!course) {
     return (
       <div className="p-6 text-center py-20">
