@@ -17,7 +17,7 @@ const STATUS_BADGE = {
 
 export default function CourseDetail() {
   const { id } = useParams();
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, isAdmin } = useAuth();
   const { enrollments: myEnrollments, enroll, drop, complete } = useEnrollment(user?.uid);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -127,7 +127,8 @@ export default function CourseDetail() {
         )}
       </div>
 
-      {/* Stats cards */}
+      {/* Admin-only analytics */}
+      {isAdmin && <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'text-violet-600 bg-violet-50' },
@@ -249,6 +250,7 @@ export default function CourseDetail() {
           </div>
         )}
       </div>
+      </>}
     </div>
   );
 }
