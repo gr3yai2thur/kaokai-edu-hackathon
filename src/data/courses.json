@@ -3,300 +3,350 @@
     "course_id": "c-101",
     "title": "Basic Python for Beginners",
     "instructor": "Coach C",
-    "total_lessons": 5
+    "total_lessons": 5,
+    "description": "เรียนรู้พื้นฐาน Python ตั้งแต่ศูนย์ ครอบคลุม syntax, ตัวแปร, เงื่อนไข, loop และฟังก์ชัน เหมาะสำหรับผู้ที่ไม่มีประสบการณ์เขียนโค้ดมาก่อน"
   },
   {
     "course_id": "c-102",
     "title": "Intermediate Business English",
     "instructor": "Kru Dev",
-    "total_lessons": 14
+    "total_lessons": 14,
+    "description": "พัฒนาทักษะภาษาอังกฤษในบริบทธุรกิจ ทั้งการเขียน Email, การนำเสนองาน, การประชุม และการเจรจาต่อรองในระดับมืออาชีพ"
   },
   {
     "course_id": "c-103",
     "title": "Fundamentals Web Development",
     "instructor": "Dr. B",
-    "total_lessons": 36
+    "total_lessons": 36,
+    "description": "รากฐานการพัฒนาเว็บไซต์ด้วย HTML, CSS และ JavaScript ตั้งแต่โครงสร้างหน้าเว็บ การจัดสไตล์ ไปจนถึงการเพิ่ม interactivity"
   },
   {
     "course_id": "c-104",
     "title": "Crash Course Cloud Computing",
     "instructor": "Kru Dev",
-    "total_lessons": 19
+    "total_lessons": 19,
+    "description": "ทำความรู้จัก Cloud Computing แบบเข้มข้น ครอบคลุม IaaS, PaaS, SaaS, AWS, Azure และ Google Cloud พร้อม use case จริง"
   },
   {
     "course_id": "c-105",
     "title": "Advanced Web Development",
     "instructor": "John Smith",
-    "total_lessons": 29
+    "total_lessons": 29,
+    "description": "เจาะลึกเทคนิคขั้นสูงในการพัฒนาเว็บ เช่น Performance Optimization, Web Security, API Design และ Modern Tooling"
   },
   {
     "course_id": "c-106",
     "title": "Basic Web Development",
     "instructor": "Kru Dev",
-    "total_lessons": 23
+    "total_lessons": 23,
+    "description": "เริ่มต้นสร้างเว็บไซต์ด้วย HTML และ CSS ขั้นพื้นฐาน เรียนรู้การจัดวางหน้าเว็บ Responsive Design และการใช้ Browser DevTools"
   },
   {
     "course_id": "c-107",
     "title": "Intermediate Web Development",
     "instructor": "John Smith",
-    "total_lessons": 50
+    "total_lessons": 50,
+    "description": "ต่อยอดทักษะ Web Dev ด้วย JavaScript ES6+, การดึงข้อมูลจาก API, Async/Await และการใช้ Git ในการพัฒนาโปรเจกต์จริง"
   },
   {
     "course_id": "c-108",
     "title": "Advanced Web Development",
     "instructor": "Teacher D",
-    "total_lessons": 40
+    "total_lessons": 40,
+    "description": "สร้าง Web Application ระดับ Production ด้วย Architecture ที่ scalable, Testing, CI/CD และการ Deploy บน Cloud"
   },
   {
     "course_id": "c-109",
     "title": "Mastery Web Development",
     "instructor": "Ajarn A",
-    "total_lessons": 29
+    "total_lessons": 29,
+    "description": "ระดับ Mastery สำหรับนักพัฒนาที่ต้องการเป็น Full-Stack Expert ครอบคลุม System Design, Microservices และ DevOps"
   },
   {
     "course_id": "c-110",
     "title": "Fundamentals Blockchain Basics",
     "instructor": "Dr. B",
-    "total_lessons": 9
+    "total_lessons": 9,
+    "description": "เข้าใจหลักการทำงานของ Blockchain, Distributed Ledger, Consensus Mechanism และการประยุกต์ใช้ในโลกธุรกิจ"
   },
   {
     "course_id": "c-111",
     "title": "Fundamentals Mobile App Dev",
     "instructor": "Jane Doe",
-    "total_lessons": 49
+    "total_lessons": 49,
+    "description": "พื้นฐานการพัฒนา Mobile App ครอบคลุมทั้ง iOS และ Android แนวคิด Cross-platform และการออกแบบ UI สำหรับมือถือ"
   },
   {
     "course_id": "c-112",
     "title": "Crash Course Project Management",
     "instructor": "Coach C",
-    "total_lessons": 36
+    "total_lessons": 36,
+    "description": "เรียนรู้การบริหารโปรเจกต์แบบเข้มข้น ครอบคลุม Agile, Scrum, Kanban, การวางแผน Timeline และการจัดการทีม"
   },
   {
     "course_id": "c-113",
     "title": "Crash Course Video Editing",
     "instructor": "Kru Dev",
-    "total_lessons": 35
+    "total_lessons": 35,
+    "description": "ตัดต่อวิดีโอแบบเร่งด่วน เรียนรู้การใช้ซอฟต์แวร์ตัดต่อ การจัดเรียง Timeline, Color Grading และการเพิ่ม Effect"
   },
   {
     "course_id": "c-114",
     "title": "Advanced SEO Mastery",
     "instructor": "Sarah Wilson",
-    "total_lessons": 5
+    "total_lessons": 5,
+    "description": "กลยุทธ์ SEO ขั้นสูง ครอบคลุม Technical SEO, Link Building, Core Web Vitals และการวิเคราะห์ด้วย Google Analytics"
   },
   {
     "course_id": "c-115",
     "title": "Mastery Blockchain Basics",
     "instructor": "John Smith",
-    "total_lessons": 36
+    "total_lessons": 36,
+    "description": "เชี่ยวชาญ Blockchain ระดับ Expert ครอบคลุม Smart Contracts, DeFi, NFT และการพัฒนา DApp บน Ethereum"
   },
   {
     "course_id": "c-116",
     "title": "Advanced React JS",
     "instructor": "Jane Doe",
-    "total_lessons": 15
+    "total_lessons": 15,
+    "description": "เจาะลึก React ขั้นสูง ครอบคลุม Custom Hooks, Context API, Performance Optimization, Server Components และ Testing"
   },
   {
     "course_id": "c-117",
     "title": "Advanced Data Science with R",
     "instructor": "Ajarn A",
-    "total_lessons": 18
+    "total_lessons": 18,
+    "description": "วิเคราะห์ข้อมูลขั้นสูงด้วยภาษา R ครอบคลุม Statistical Modeling, Machine Learning, ggplot2 และการทำ Data Pipeline"
   },
   {
     "course_id": "c-118",
     "title": "Basic Cybersecurity",
     "instructor": "Ajarn A",
-    "total_lessons": 35
+    "total_lessons": 35,
+    "description": "รู้จักภัยคุกคามทางไซเบอร์เบื้องต้น ครอบคลุม Network Security, Password Management, Phishing และการป้องกันตัวเองออนไลน์"
   },
   {
     "course_id": "c-119",
     "title": "Advanced Vue JS",
     "instructor": "John Smith",
-    "total_lessons": 22
+    "total_lessons": 22,
+    "description": "พัฒนา Web App ด้วย Vue 3 ขั้นสูง ครอบคลุม Composition API, Pinia, Vue Router, SSR และการ Optimize Performance"
   },
   {
     "course_id": "c-120",
     "title": "Advanced Photography",
     "instructor": "Sarah Wilson",
-    "total_lessons": 34
+    "total_lessons": 34,
+    "description": "เทคนิคการถ่ายภาพขั้นสูง ครอบคลุม Manual Mode, Composition, Studio Lighting, Post-processing และการสร้าง Portfolio"
   },
   {
     "course_id": "c-121",
     "title": "Mastery Creative Writing",
     "instructor": "Dr. B",
-    "total_lessons": 8
+    "total_lessons": 8,
+    "description": "เชี่ยวชาญการเขียนเชิงสร้างสรรค์ระดับมืออาชีพ ครอบคลุม Storytelling, Character Development, Plot Structure และการเขียนสำหรับสื่อต่างๆ"
   },
   {
     "course_id": "c-122",
     "title": "Intermediate Digital Marketing",
     "instructor": "Kru Dev",
-    "total_lessons": 25
+    "total_lessons": 25,
+    "description": "ยกระดับการทำ Digital Marketing ครอบคลุม Content Strategy, Social Media Marketing, Email Marketing และการวัดผล ROI"
   },
   {
     "course_id": "c-123",
     "title": "Advanced Angular",
     "instructor": "Coach C",
-    "total_lessons": 49
+    "total_lessons": 49,
+    "description": "สร้าง Enterprise Application ด้วย Angular ขั้นสูง ครอบคลุม RxJS, NgRx State Management, Lazy Loading และ Testing"
   },
   {
     "course_id": "c-124",
     "title": "Basic UX/UI Design",
     "instructor": "Sarah Wilson",
-    "total_lessons": 26
+    "total_lessons": 26,
+    "description": "เรียนรู้หลักการออกแบบ UX/UI เบื้องต้น ครอบคลุม User Research, Wireframing, Prototyping ด้วย Figma และ Usability Testing"
   },
   {
     "course_id": "c-125",
     "title": "Mastery UX/UI Design",
     "instructor": "Michael Brown",
-    "total_lessons": 20
+    "total_lessons": 20,
+    "description": "เชี่ยวชาญการออกแบบ UX/UI ระดับ Expert ครอบคลุม Design System, Motion Design, Accessibility และการทำงานร่วมกับ Developer"
   },
   {
     "course_id": "c-126",
     "title": "Fundamentals Video Editing",
     "instructor": "Dr. B",
-    "total_lessons": 23
+    "total_lessons": 23,
+    "description": "พื้นฐานการตัดต่อวิดีโอ เรียนรู้ Workflow, การจัดการ Footage, การตัดต่อพื้นฐาน และการ Export สำหรับแพลตฟอร์มต่างๆ"
   },
   {
     "course_id": "c-127",
     "title": "Basic Photography",
     "instructor": "Professor E",
-    "total_lessons": 50
+    "total_lessons": 50,
+    "description": "เริ่มต้นถ่ายภาพอย่างถูกต้อง เรียนรู้ Exposure Triangle, Composition Rules, การใช้กล้อง DSLR/Mirrorless และการแก้ไขภาพเบื้องต้น"
   },
   {
     "course_id": "c-128",
     "title": "Crash Course Video Editing",
     "instructor": "Professor E",
-    "total_lessons": 42
+    "total_lessons": 42,
+    "description": "เรียนตัดต่อวิดีโอแบบเร่งรัด ตั้งแต่ Import Footage ถึง Final Export พร้อมเทคนิค Transitions, Audio Mixing และ Color Correction"
   },
   {
     "course_id": "c-129",
     "title": "Mastery Data Science with R",
     "instructor": "Sarah Wilson",
-    "total_lessons": 36
+    "total_lessons": 36,
+    "description": "เชี่ยวชาญ Data Science ด้วย R ระดับ Expert ครอบคลุม Deep Learning, Time Series Analysis, Big Data Processing และการสร้าง Dashboard"
   },
   {
     "course_id": "c-130",
     "title": "Basic Data Science with R",
     "instructor": "Ajarn A",
-    "total_lessons": 17
+    "total_lessons": 17,
+    "description": "เริ่มต้น Data Science ด้วยภาษา R ครอบคลุม Data Import, Data Wrangling ด้วย dplyr, การ Visualize ด้วย ggplot2 และ Basic Statistics"
   },
   {
     "course_id": "c-131",
     "title": "Basic Photography",
     "instructor": "John Smith",
-    "total_lessons": 45
+    "total_lessons": 45,
+    "description": "รู้จักกับการถ่ายภาพพื้นฐาน ครอบคลุมการตั้งค่ากล้อง ทฤษฎีแสง การจัดองค์ประกอบภาพ และการถ่ายภาพในสภาพแสงต่างๆ"
   },
   {
     "course_id": "c-132",
     "title": "Crash Course Vue JS",
     "instructor": "Michael Brown",
-    "total_lessons": 40
+    "total_lessons": 40,
+    "description": "เรียน Vue.js แบบเข้มข้น ครอบคลุม Vue 3 Composition API, Reactive Data, Component System, Vue Router และ State Management"
   },
   {
     "course_id": "c-133",
     "title": "Advanced Data Science with R",
     "instructor": "Sarah Wilson",
-    "total_lessons": 39
+    "total_lessons": 39,
+    "description": "วิเคราะห์ข้อมูลซับซ้อนด้วย R ขั้นสูง ครอบคลุม Predictive Modeling, NLP, Clustering, Classification และการนำเสนอผลลัพธ์"
   },
   {
     "course_id": "c-134",
     "title": "Intermediate Python for Beginners",
     "instructor": "Sarah Wilson",
-    "total_lessons": 37
+    "total_lessons": 37,
+    "description": "ยกระดับ Python จากพื้นฐานสู่กลาง ครอบคลุม OOP, File I/O, Exception Handling, Libraries ยอดนิยม เช่น NumPy และ Pandas"
   },
   {
     "course_id": "c-135",
     "title": "Mastery React JS",
     "instructor": "Jane Doe",
-    "total_lessons": 24
+    "total_lessons": 24,
+    "description": "เป็น React Expert ด้วยการเรียน Architecture Pattern, Next.js, Full-stack Integration, Testing และ Deployment สำหรับ Production"
   },
   {
     "course_id": "c-136",
     "title": "Intermediate Graphic Design",
     "instructor": "John Smith",
-    "total_lessons": 29
+    "total_lessons": 29,
+    "description": "ออกแบบกราฟิกระดับกลาง ครอบคลุม Typography, Color Theory, Brand Identity, Layout Design และการใช้ Adobe Illustrator"
   },
   {
     "course_id": "c-137",
     "title": "Fundamentals Cryptocurrency",
     "instructor": "Coach C",
-    "total_lessons": 12
+    "total_lessons": 12,
+    "description": "เข้าใจพื้นฐาน Cryptocurrency ครอบคลุม Bitcoin, Altcoins, Wallet, Exchange, การทำ DCA และความเสี่ยงในการลงทุน"
   },
   {
     "course_id": "c-138",
     "title": "Intermediate SEO Mastery",
     "instructor": "Ajarn A",
-    "total_lessons": 10
+    "total_lessons": 10,
+    "description": "SEO ระดับกลาง ครอบคลุม Keyword Research, On-page Optimization, Technical Audit, Local SEO และการใช้เครื่องมือ SEO"
   },
   {
     "course_id": "c-139",
     "title": "Intermediate Cybersecurity",
     "instructor": "Professor E",
-    "total_lessons": 7
+    "total_lessons": 7,
+    "description": "เจาะลึก Cybersecurity ระดับกลาง ครอบคลุม Penetration Testing เบื้องต้น, Incident Response, Firewall และ Encryption"
   },
   {
     "course_id": "c-140",
     "title": "Advanced SEO Mastery",
     "instructor": "Dr. B",
-    "total_lessons": 28
+    "total_lessons": 28,
+    "description": "SEO ขั้นสูงสำหรับมืออาชีพ ครอบคลุม Enterprise SEO, International SEO, Algorithm Updates และการสร้าง SEO Strategy"
   },
   {
     "course_id": "c-141",
     "title": "Intermediate Creative Writing",
     "instructor": "John Smith",
-    "total_lessons": 7
+    "total_lessons": 7,
+    "description": "พัฒนาทักษะการเขียนเชิงสร้างสรรค์ระดับกลาง ครอบคลุม Narrative Techniques, Dialogue Writing, Scene Building และการ Workshop"
   },
   {
     "course_id": "c-142",
     "title": "Intermediate Angular",
     "instructor": "Teacher D",
-    "total_lessons": 33
+    "total_lessons": 33,
+    "description": "พัฒนาทักษะ Angular ระดับกลาง ครอบคลุม Forms, HTTP Client, Routing, Pipes, Services และการจัดการ State"
   },
   {
     "course_id": "c-143",
     "title": "Advanced Video Editing",
     "instructor": "Sarah Wilson",
-    "total_lessons": 7
+    "total_lessons": 7,
+    "description": "ตัดต่อวิดีโอขั้นสูง ครอบคลุม Advanced Color Grading, VFX, Motion Graphics, Multi-cam Editing และ Delivery สำหรับ Cinema"
   },
   {
     "course_id": "c-144",
     "title": "Basic Cloud Computing",
     "instructor": "Michael Brown",
-    "total_lessons": 49
+    "total_lessons": 49,
+    "description": "ทำความรู้จัก Cloud Computing เบื้องต้น ครอบคลุมการใช้งาน AWS/GCP/Azure, Virtual Machines, Storage และ Basic Networking"
   },
   {
     "course_id": "c-145",
     "title": "Mastery Graphic Design",
     "instructor": "John Smith",
-    "total_lessons": 12
+    "total_lessons": 12,
+    "description": "เชี่ยวชาญ Graphic Design ระดับ Master ครอบคลุม Art Direction, Campaign Design, Motion Graphics และการสร้าง Design Portfolio"
   },
   {
     "course_id": "c-146",
     "title": "Intermediate Cybersecurity",
     "instructor": "John Smith",
-    "total_lessons": 29
+    "total_lessons": 29,
+    "description": "ความปลอดภัยทางไซเบอร์ระดับกลาง ครอบคลุม Network Forensics, Vulnerability Assessment, OWASP Top 10 และ Security Hardening"
   },
   {
     "course_id": "c-147",
     "title": "Intermediate Cybersecurity",
     "instructor": "Teacher D",
-    "total_lessons": 39
+    "total_lessons": 39,
+    "description": "เจาะลึกการป้องกันระบบและ Network Security ระดับกลาง ครอบคลุม Ethical Hacking พื้นฐาน, SOC Operations และ Threat Intelligence"
   },
   {
     "course_id": "c-148",
     "title": "Fundamentals Blockchain Basics",
     "instructor": "Michael Brown",
-    "total_lessons": 34
+    "total_lessons": 34,
+    "description": "ศึกษาพื้นฐาน Blockchain Technology ครอบคลุม Hash Function, Merkle Tree, Consensus Algorithms และการประยุกต์ใช้ใน Supply Chain"
   },
   {
     "course_id": "c-149",
     "title": "Mastery Graphic Design",
     "instructor": "Kru Dev",
-    "total_lessons": 22
+    "total_lessons": 22,
+    "description": "ยกระดับการออกแบบสู่ระดับ Mastery ครอบคลุม Visual Identity System, Packaging Design, Editorial Design และ Branding Strategy"
   },
   {
     "course_id": "c-150",
     "title": "Basic Machine Learning",
     "instructor": "Michael Brown",
-    "total_lessons": 36
+    "total_lessons": 36,
+    "description": "เริ่มต้น Machine Learning ครอบคลุม Supervised/Unsupervised Learning, Regression, Classification, Decision Tree และการใช้ scikit-learn"
   }
 ]

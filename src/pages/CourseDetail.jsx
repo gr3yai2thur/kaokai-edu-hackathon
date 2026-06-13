@@ -73,6 +73,9 @@ export default function CourseDetail() {
         </div>
         <h1 className="text-xl md:text-2xl font-bold mb-2">{course.title}</h1>
         <p className="text-violet-200 text-sm">Instructor: <span className="text-white font-medium">{course.instructor}</span></p>
+        {course.description && (
+          <p className="text-violet-100 text-sm mt-3 leading-relaxed max-w-2xl">{course.description}</p>
+        )}
         <div className="flex flex-wrap gap-4 mt-4 text-sm">
           <span className="flex items-center gap-1.5 text-violet-200">
             <BookOpen className="w-4 h-4" /> {course.total_lessons} lessons
