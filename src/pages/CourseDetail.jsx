@@ -1,15 +1,12 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { users, enrollments, getCategoryFromTitle, getLevelFromTitle, getCourseStats } from '@/lib/dataHelpers';
-import { ArrowLeft, BookOpen, Users, Award, Clock, TrendingUp, CheckCircle2, XCircle, AlertCircle, Star, Download } from 'lucide-react';
+import { ArrowLeft, BookOpen, Users, Award, Clock, TrendingUp, CheckCircle2, XCircle, AlertCircle, Star } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '@/lib/AuthContext';
 import { useEnrollment, calcCoursePoints } from '@/hooks/useEnrollment';
 import { useCourses } from '@/hooks/useCourses';
 import CourseLessons from '@/components/CourseLessons';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { jsPDF } from 'jspdf';
 
 const STATUS_COLORS = { COMPLETED: '#7c3aed', IN_PROGRESS: '#2563eb', NOT_STARTED: '#94a3b8', DROPPED: '#ef4444' };
 const STATUS_LABELS = { COMPLETED: 'Completed', IN_PROGRESS: 'In Progress', NOT_STARTED: 'Not Started', DROPPED: 'Dropped' };
@@ -22,7 +19,7 @@ const STATUS_BADGE = {
 
 export default function CourseDetail() {
   const { id } = useParams();
-  const { user, profile, refreshProfile, isAdmin } = useAuth();
+  const { user, refreshProfile, isAdmin } = useAuth();
   const { enrollments: myEnrollments, enroll, drop, complete } = useEnrollment(user?.uid);
   const [actionLoading, setActionLoading] = useState(false);
   const allCourses = useCourses();
@@ -55,79 +52,9 @@ export default function CourseDetail() {
     setActionLoading(false);
   };
 
-  const [certLoading, setCertLoading] = useState(false);
-
-  const downloadCert = async () => {
-    if (!user || certLoading) return;
-    setCertLoading(true);
-    try {
-      const userRef = doc(db, 'users', user.uid);
-      const snap = await getDoc(userRef);
-      const tokens = snap.data()?.cert_tokens ?? 0;
-      if (tokens < 1) { alert('ไม่มี Certificate Token กรุณาแลกที่ Rewards Store'); setCertLoading(false); return; }
-      await updateDoc(userRef, { cert_tokens: tokens - 1 });
-
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const W = 297, H = 210;
-
-      // Background
-      pdf.setFillColor(245, 243, 255);
-      pdf.rect(0, 0, W, H, 'F');
-      pdf.setFillColor(109, 40, 217);
-      pdf.rect(0, 0, W, 12, 'F');
-      pdf.rect(0, H - 12, W, 12, 'F');
-      pdf.setDrawColor(109, 40, 217);
-      pdf.setLineWidth(1);
-      pdf.rect(14, 16, W - 28, H - 32);
-
-      // Title
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(28);
-      pdf.setTextColor(109, 40, 217);
-      pdf.text('CERTIFICATE OF COMPLETION', W / 2, 45, { align: 'center' });
-
-      pdf.setFontSize(13);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 100, 120);
-      pdf.text('This is to certify that', W / 2, 62, { align: 'center' });
-
-      pdf.setFontSize(26);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(30, 30, 50);
-      pdf.text(user.displayName || user.email, W / 2, 80, { align: 'center' });
-
-      pdf.setFontSize(13);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 100, 120);
-      pdf.text('has successfully completed the course', W / 2, 95, { align: 'center' });
-
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(109, 40, 217);
-      const title = pdf.splitTextToSize(course.title, 220);
-      pdf.text(title, W / 2, 112, { align: 'center' });
-
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(120, 120, 140);
-      pdf.text(`Instructor: ${course.instructor}`, W / 2, 130, { align: 'center' });
-      pdf.text(`Date: ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}`, W / 2, 140, { align: 'center' });
-
-      pdf.setFontSize(9);
-      pdf.setTextColor(160, 160, 180);
-      pdf.text('KaoKai Education Platform', W / 2, H - 18, { align: 'center' });
-
-      pdf.save(`Certificate_${course.title.replace(/\s+/g, '_')}.pdf`);
-      await refreshProfile();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setCertLoading(false);
-    }
-  };
-
   const stats = getCourseStats(id);
-  const category = getCategoryFromTitle(course.title);  const level = getLevelFromTitle(course.title);
+  const category = getCategoryFromTitle(course.title);
+  const level = getLevelFromTitle(course.title);
   const courseEnrollments = enrollments
     .filter(e => e.course_id === id)
     .map(e => ({ ...e, user: users.find(u => u.user_id === e.user_id) }));
@@ -216,20 +143,9 @@ export default function CourseDetail() {
               </>
             )}
             {myStatus === 'COMPLETED' && (
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="bg-white/20 text-white text-sm font-medium px-4 py-2.5 rounded-xl">
-                  ✓ เรียนจบแล้ว (+{pts} pts)
-                </span>
-                <button
-                  onClick={downloadCert}
-                  disabled={certLoading || (profile?.cert_tokens ?? 0) < 1}
-                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
-                  title={(profile?.cert_tokens ?? 0) < 1 ? 'ต้องใช้ Certificate Token — แลกได้ที่ Rewards Store' : 'ดาวน์โหลดใบรับรอง'}
-                >
-                  <Download className="w-4 h-4" />
-                  {certLoading ? 'กำลังสร้าง...' : `Certificate${(profile?.cert_tokens ?? 0) > 0 ? ` (Token: ${profile.cert_tokens})` : ' (ไม่มี Token)'}`}
-                </button>
-              </div>
+              <span className="bg-white/20 text-white text-sm font-medium px-4 py-2.5 rounded-xl">
+                ✓ เรียนจบแล้ว (+{pts} pts)
+              </span>
             )}
           </div>
         )}
