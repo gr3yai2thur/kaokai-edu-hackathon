@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { users, getUserStats } from '@/lib/dataHelpers';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Search, Users as UsersIcon, Star, Filter, ChevronRight } from 'lucide-react';
+import { Search, Users as UsersIcon, Star, Filter, ChevronRight, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ROLE_BADGE = {
@@ -16,6 +16,7 @@ export default function Users() {
   const [roleFilter, setRoleFilter] = useState('All');
   const [sortBy, setSortBy] = useState('name');
   const [firestoreUsers, setFirestoreUsers] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     getDocs(collection(db, 'users'))
@@ -26,7 +27,7 @@ export default function Users() {
             const pts = data.loyalty_points || 0;
             return {
               user_id: d.id,
-              name: data.name || '',
+              name: data.name || data.email?.split('@')[0] || 'Unknown User',
               email: data.email || '',
               phone: data.phone || '',
               loyalty_points: pts,
@@ -36,7 +37,10 @@ export default function Users() {
           .filter(fu => !users.some(mu => mu.email === fu.email));
         setFirestoreUsers(fsUsers);
       })
-      .catch(() => {});
+      .catch(err => {
+        console.error("Firestore fetch error:", err);
+        setError(err.message || String(err));
+      });
   }, []);
 
   const allUsers = useMemo(() => [...users, ...firestoreUsers], [firestoreUsers]);
@@ -72,6 +76,13 @@ export default function Users() {
         <h1 className="text-2xl font-bold text-slate-800">Users</h1>
         <p className="text-slate-500 text-sm mt-1">{filtered.length} of {allUsers.length} users</p>
       </div>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-sm flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <span>เกิดข้อผิดพลาดในการดึงข้อมูลจาก Firestore: {error} (กำลังแสดงเฉพาะรายชื่อจำลอง 15 คน)</span>
+        </div>
+      )}
 
       {/* Role summary cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">

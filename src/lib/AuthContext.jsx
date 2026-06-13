@@ -22,8 +22,24 @@ export const AuthProvider = ({ children }) => {
           const snap = await getDoc(docRef);
           if (snap.exists()) {
             const data = snap.data();
-            setRole(data.role || 'user');
-            setProfile(data);
+            // If the document exists but is missing name or email, enrich it
+            if (!data.email || !data.name) {
+              const enrichedProfile = {
+                ...data,
+                name: data.name || firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                email: data.email || firebaseUser.email || '',
+                phone: data.phone || '',
+                loyalty_points: data.loyalty_points !== undefined ? data.loyalty_points : 0,
+                membership_role: data.membership_role || 'MEMBER',
+                role: data.role || 'user',
+              };
+              await setDoc(docRef, enrichedProfile, { merge: true });
+              setRole(enrichedProfile.role);
+              setProfile(enrichedProfile);
+            } else {
+              setRole(data.role || 'user');
+              setProfile(data);
+            }
           } else {
             // First-time login (e.g. Google) → auto-create profile
             const newProfile = {
@@ -38,7 +54,8 @@ export const AuthProvider = ({ children }) => {
             setRole('user');
             setProfile(newProfile);
           }
-        } catch {
+        } catch (err) {
+          console.error("AuthContext error reading/writing Firestore user:", err);
           setRole('user');
           setProfile(null);
         }
