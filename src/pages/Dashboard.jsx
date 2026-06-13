@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 import { Users, BookOpen, TrendingUp, Award, ArrowRight, CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/lib/AuthContext';
 
 const STATUS_COLORS = {
   COMPLETED: '#7c3aed',
@@ -36,6 +37,7 @@ function KPICard({ icon: Icon, label, value, sub, color }) {
 }
 
 export default function Dashboard() {
+  const { isAdmin } = useAuth();
   const [firestoreUsers, setFirestoreUsers] = useState([]);
 
   useEffect(() => {
@@ -280,15 +282,17 @@ export default function Dashboard() {
       </div>
 
       {/* Avg loyalty */}
-      <div className="mt-6 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <p className="text-violet-200 text-sm">Average Loyalty Points per User</p>
-          <p className="text-4xl font-bold mt-1">{avgLoyalty.toLocaleString()}</p>
+      {isAdmin && (
+        <div className="mt-6 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <p className="text-violet-200 text-sm">Average Loyalty Points per User</p>
+            <p className="text-4xl font-bold mt-1">{avgLoyalty.toLocaleString()}</p>
+          </div>
+          <Link to="/users" className="flex items-center gap-2 bg-white/20 hover:bg-white/30 transition rounded-xl px-4 py-2.5 text-sm font-medium">
+            View All Users <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
-        <Link to="/users" className="flex items-center gap-2 bg-white/20 hover:bg-white/30 transition rounded-xl px-4 py-2.5 text-sm font-medium">
-          View All Users <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
+      )}
     </div>
   );
 }
