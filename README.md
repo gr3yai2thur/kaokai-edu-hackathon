@@ -4,34 +4,6 @@
 
 ---
 
-## เริ่มต้นใช้งาน
-
-### รัน Local
-```bash
-npm install
-npm run dev
-```
-
-### Environment Variables
-สร้างไฟล์ `.env` ที่ root:
-```
-VITE_FIREBASE_API_KEY=...
-VITE_FIREBASE_AUTH_DOMAIN=...
-VITE_FIREBASE_PROJECT_ID=...
-VITE_FIREBASE_STORAGE_BUCKET=...
-VITE_FIREBASE_MESSAGING_SENDER_ID=...
-VITE_FIREBASE_APP_ID=...
-VITE_GEMINI_API_KEY=...
-```
-
-### Build & Deploy
-```bash
-npm run build        # output อยู่ที่ dist/
-firebase deploy      # หรือ deploy บน Vercel / Netlify
-```
-
----
-
 ## การใช้งาน — ผู้เรียน (User)
 
 | หน้า | การใช้งาน |
