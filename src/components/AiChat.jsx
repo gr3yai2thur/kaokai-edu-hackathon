@@ -40,24 +40,18 @@ const SUGGESTIONS = [
   'อัตราการเรียนจบเป็นเท่าไร?',
 ];
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+import { GoogleGenAI } from '@google/genai';
+
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 async function callAI(prompt) {
-  if (!OPENAI_API_KEY) {
-    throw new Error('NO_API_KEY');
-  }
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 500,
-    }),
+  if (!GEMINI_API_KEY) throw new Error('NO_API_KEY');
+  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.0-flash',
+    contents: prompt,
   });
-  if (!res.ok) throw new Error('API error');
-  const data = await res.json();
-  return data.choices[0].message.content;
+  return response.text;
 }
 
 export default function AiChat() {
@@ -93,7 +87,7 @@ export default function AiChat() {
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (err) {
       const msg = err.message === 'NO_API_KEY'
-        ? 'AI ยังไม่ได้ตั้งค่า API Key (VITE_OPENAI_API_KEY) ค่ะ'
+        ? 'AI ยังไม่ได้ตั้งค่า Gemini API Key ค่ะ'
         : 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
       setMessages(prev => [...prev, { role: 'assistant', content: msg }]);
     }
