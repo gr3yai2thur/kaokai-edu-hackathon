@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { enrollments as staticEnrollments } from '@/lib/dataHelpers';
 
-// Live Firestore enrollments for all users (admin/global use)
 export function useAllEnrollments() {
-  const [enrollments, setEnrollments] = useState(null); // null = loading
+  const [fsEnrollments, setFsEnrollments] = useState(null);
+
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'enrollments'), snap => {
-      setEnrollments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setFsEnrollments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
     return unsub;
   }, []);
-  return enrollments; // null while loading, array when ready
+
+  if (fsEnrollments === null) return null; // still loading
+
+  // Merge: Firestore overrides static JSON entries with same enroll_id/id
+  const fsIds = new Set(fsEnrollments.map(e => e.id));
+  const merged = [
+    ...staticEnrollments.filter(e => !fsIds.has(e.enroll_id)),
+    ...fsEnrollments,
+  ];
+  return merged;
 }
