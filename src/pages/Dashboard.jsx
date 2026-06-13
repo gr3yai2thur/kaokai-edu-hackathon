@@ -1,25 +1,15 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { users, courses, enrollments, getTopCoursesByEnrollment, getStatusBreakdown, getInstructorStats, getCategoryFromTitle } from '@/lib/dataHelpers';
+import { users, courses, getCategoryFromTitle } from '@/lib/dataHelpers';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
 import { Users, BookOpen, TrendingUp, Award, ArrowRight, CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/AuthContext';
+import { useAllEnrollments } from '@/hooks/useAllEnrollments';
 
-const STATUS_COLORS = {
-  COMPLETED: '#7c3aed',
-  IN_PROGRESS: '#2563eb',
-  NOT_STARTED: '#94a3b8',
-  DROPPED: '#ef4444',
-};
-
-const STATUS_LABELS = {
-  COMPLETED: 'Completed',
-  IN_PROGRESS: 'In Progress',
-  NOT_STARTED: 'Not Started',
-  DROPPED: 'Dropped',
-};
+const STATUS_COLORS = { COMPLETED: '#7c3aed', IN_PROGRESS: '#2563eb', NOT_STARTED: '#94a3b8', DROPPED: '#ef4444' };
+const STATUS_LABELS = { COMPLETED: 'Completed', IN_PROGRESS: 'In Progress', NOT_STARTED: 'Not Started', DROPPED: 'Dropped' };
 
 function KPICard({ icon: Icon, label, value, sub, color }) {
   return (
@@ -38,6 +28,7 @@ function KPICard({ icon: Icon, label, value, sub, color }) {
 
 export default function Dashboard() {
   const { isAdmin } = useAuth();
+  const liveEnrollments = useAllEnrollments(); // null = loading, array = ready
   const [firestoreUsers, setFirestoreUsers] = useState([]);
 
   useEffect(() => {
@@ -47,59 +38,77 @@ export default function Dashboard() {
           .map(d => {
             const data = d.data();
             const pts = data.loyalty_points || 0;
-            return {
-              user_id: d.id,
-              name: data.name || data.email?.split('@')[0] || 'Unknown User',
-              email: data.email || '',
-              phone: data.phone || '',
-              loyalty_points: pts,
-              role: pts >= 1000 ? 'VIP' : 'MEMBER',
-              isAdmin: data.role === 'admin',
-            };
+            return { user_id: d.id, name: data.name || data.email?.split('@')[0] || 'Unknown User', email: data.email || '', loyalty_points: pts, role: pts >= 1000 ? 'VIP' : 'MEMBER', isAdmin: data.role === 'admin' };
           })
           .filter(fu => !fu.isAdmin)
           .filter(fu => !users.some(mu => mu.email === fu.email));
         setFirestoreUsers(fsUsers);
       })
-      .catch(err => console.error("Dashboard error fetching users:", err));
+      .catch(err => console.error('Dashboard error fetching users:', err));
   }, []);
 
   const allUsers = useMemo(() => [...users, ...firestoreUsers], [firestoreUsers]);
 
-  const statusBreakdown = useMemo(() => getStatusBreakdown(), []);
-  const topCourses = useMemo(() => getTopCoursesByEnrollment(6), []);
-  const instructorStats = useMemo(() => getInstructorStats().slice(0, 5), []);
+  // Use live Firestore data; fall back to empty array while loading
+  const allEnrollments = liveEnrollments ?? [];
+
+  const statusBreakdown = useMemo(() => {
+    const bd = { COMPLETED: 0, IN_PROGRESS: 0, NOT_STARTED: 0, DROPPED: 0 };
+    allEnrollments.forEach(e => { if (bd[e.status] !== undefined) bd[e.status]++; });
+    return bd;
+  }, [allEnrollments]);
+
+  const topCourses = useMemo(() => {
+    const counts = {};
+    allEnrollments.forEach(e => { counts[e.course_id] = (counts[e.course_id] || 0) + 1; });
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 6)
+      .map(([courseId, count]) => ({ course: courses.find(c => c.course_id === courseId), enrollmentCount: count }));
+  }, [allEnrollments]);
+
+  const instructorStats = useMemo(() => {
+    const stats = {};
+    courses.forEach(c => {
+      if (!stats[c.instructor]) stats[c.instructor] = { courses: 0, enrollments: 0, completions: 0 };
+      stats[c.instructor].courses++;
+      const ce = allEnrollments.filter(e => e.course_id === c.course_id);
+      stats[c.instructor].enrollments += ce.length;
+      stats[c.instructor].completions += ce.filter(e => e.status === 'COMPLETED').length;
+    });
+    return Object.entries(stats).map(([name, s]) => ({ name, ...s })).sort((a, b) => b.enrollments - a.enrollments).slice(0, 5);
+  }, [allEnrollments]);
 
   const completionRate = useMemo(() => {
-    const total = enrollments.length;
-    const completed = enrollments.filter(e => e.status === 'COMPLETED').length;
-    return Math.round((completed / total) * 100);
-  }, []);
+    const total = allEnrollments.length;
+    if (!total) return 0;
+    return Math.round((allEnrollments.filter(e => e.status === 'COMPLETED').length / total) * 100);
+  }, [allEnrollments]);
 
   const pieData = useMemo(() =>
-    Object.entries(statusBreakdown).map(([key, value]) => ({
-      name: STATUS_LABELS[key],
-      value,
-      color: STATUS_COLORS[key],
-    })), [statusBreakdown]);
+    Object.entries(statusBreakdown).map(([key, value]) => ({ name: STATUS_LABELS[key], value, color: STATUS_COLORS[key] })),
+    [statusBreakdown]);
 
   const categoryData = useMemo(() => {
     const counts = {};
-    courses.forEach(c => {
-      const cat = getCategoryFromTitle(c.title);
-      counts[cat] = (counts[cat] || 0) + 1;
-    });
+    courses.forEach(c => { const cat = getCategoryFromTitle(c.title); counts[cat] = (counts[cat] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, []);
 
   const vipCount = useMemo(() => allUsers.filter(u => u.role === 'VIP').length, [allUsers]);
   const avgLoyalty = useMemo(() => allUsers.length > 0 ? Math.round(allUsers.reduce((s, u) => s + u.loyalty_points, 0) / allUsers.length) : 0, [allUsers]);
 
-  const top10CoursesBarData = useMemo(() => getTopCoursesByEnrollment(10).map(({ course, enrollmentCount }) => ({
-    name: course?.title?.length > 22 ? course.title.slice(0, 22) + '…' : course?.title,
-    fullName: course?.title,
-    enrollments: enrollmentCount,
-  })), []);
+  const top10CoursesBarData = useMemo(() => {
+    const counts = {};
+    allEnrollments.forEach(e => { counts[e.course_id] = (counts[e.course_id] || 0) + 1; });
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([courseId, count]) => {
+        const course = courses.find(c => c.course_id === courseId);
+        return { name: course?.title?.length > 22 ? course.title.slice(0, 22) + '…' : course?.title, fullName: course?.title, enrollments: count };
+      });
+  }, [allEnrollments]);
 
   const studentSummaryData = useMemo(() => [
     { name: 'Completed', value: statusBreakdown.COMPLETED, fill: '#7c3aed' },
@@ -108,9 +117,10 @@ export default function Dashboard() {
     { name: 'Dropped', value: statusBreakdown.DROPPED, fill: '#ef4444' },
   ], [statusBreakdown]);
 
+  const totalEnrollments = allEnrollments.length;
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-800">Dashboard Overview</h1>
         <p className="text-slate-500 text-sm mt-1">ภาพรวมระบบการเรียนรู้และสถิติสำคัญ</p>
@@ -120,7 +130,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <KPICard icon={Users} label="Total Users" value={allUsers.length} sub={`${vipCount} VIP`} color="bg-gradient-to-br from-violet-500 to-violet-700" />
         <KPICard icon={BookOpen} label="Total Courses" value={courses.length} sub="50 active" color="bg-gradient-to-br from-blue-500 to-blue-700" />
-        <KPICard icon={TrendingUp} label="Enrollments" value={enrollments.length} sub={`${statusBreakdown.IN_PROGRESS} in progress`} color="bg-gradient-to-br from-emerald-500 to-emerald-700" />
+        <KPICard icon={TrendingUp} label="Enrollments" value={totalEnrollments} sub={`${statusBreakdown.IN_PROGRESS} in progress`} color="bg-gradient-to-br from-emerald-500 to-emerald-700" />
         <KPICard icon={Award} label="Completion Rate" value={`${completionRate}%`} sub={`${statusBreakdown.COMPLETED} completed`} color="bg-gradient-to-br from-amber-500 to-orange-600" />
       </div>
 
@@ -144,15 +154,12 @@ export default function Dashboard() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Status Pie */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h2 className="font-semibold text-slate-800 mb-4">Enrollment Status</h2>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value">
-                {pieData.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
-                ))}
+                {pieData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
               </Pie>
               <Tooltip formatter={(v, n) => [v, n]} />
               <Legend iconType="circle" iconSize={8} />
@@ -160,7 +167,6 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Category Bar */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h2 className="font-semibold text-slate-800 mb-4">Courses by Category</h2>
           <ResponsiveContainer width="100%" height={220}>
@@ -176,13 +182,12 @@ export default function Dashboard() {
 
       {/* Student Summary + Course Popularity */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-        {/* Total Students Card */}
         <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h2 className="font-semibold text-slate-800 mb-1">นักเรียนทั้งหมด</h2>
           <p className="text-xs text-slate-400 mb-4">สรุปจำนวนนักเรียนตามสถานะ</p>
           <div className="flex items-center justify-center mb-5">
             <div className="text-center">
-              <p className="text-5xl font-black text-violet-700">{enrollments.length}</p>
+              <p className="text-5xl font-black text-violet-700">{totalEnrollments}</p>
               <p className="text-sm text-slate-400 mt-1">Total Enrollments</p>
             </div>
           </div>
@@ -193,21 +198,18 @@ export default function Dashboard() {
                 <span className="text-sm text-slate-600 flex-1">{name}</span>
                 <span className="text-sm font-semibold text-slate-800">{value}</span>
                 <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${Math.round((value / enrollments.length) * 100)}%`, backgroundColor: fill }} />
+                  <div className="h-full rounded-full" style={{ width: `${totalEnrollments ? Math.round((value / totalEnrollments) * 100) : 0}%`, backgroundColor: fill }} />
                 </div>
-                <span className="text-xs text-slate-400 w-8 text-right">{Math.round((value / enrollments.length) * 100)}%</span>
+                <span className="text-xs text-slate-400 w-8 text-right">{totalEnrollments ? Math.round((value / totalEnrollments) * 100) : 0}%</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Course Popularity Bar */}
         <div className="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-1">
             <h2 className="font-semibold text-slate-800">ความนิยมของคอร์ส</h2>
-            <Link to="/courses" className="text-xs text-violet-600 hover:underline flex items-center gap-1">
-              ดูทั้งหมด <ArrowRight className="w-3 h-3" />
-            </Link>
+            <Link to="/courses" className="text-xs text-violet-600 hover:underline flex items-center gap-1">ดูทั้งหมด <ArrowRight className="w-3 h-3" /></Link>
           </div>
           <p className="text-xs text-slate-400 mb-4">Top 10 คอร์สที่มีผู้ลงทะเบียนมากที่สุด</p>
           <ResponsiveContainer width="100%" height={260}>
@@ -232,20 +234,15 @@ export default function Dashboard() {
 
       {/* Top Courses & Instructors */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Courses */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-800">Top Enrolled Courses</h2>
-            <Link to="/courses" className="text-xs text-violet-600 hover:underline flex items-center gap-1">
-              View all <ArrowRight className="w-3 h-3" />
-            </Link>
+            <Link to="/courses" className="text-xs text-violet-600 hover:underline flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>
           </div>
           <div className="space-y-3">
             {topCourses.map(({ course, enrollmentCount }, i) => (
               <Link key={course?.course_id} to={`/courses/${course?.course_id}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
-                <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-slate-100 text-slate-600' : 'bg-orange-50 text-orange-600'}`}>
-                  {i + 1}
-                </span>
+                <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-slate-100 text-slate-600' : 'bg-orange-50 text-orange-600'}`}>{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-700 truncate group-hover:text-violet-700">{course?.title}</p>
                   <p className="text-xs text-slate-400">{course?.instructor}</p>
@@ -256,13 +253,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Top Instructors */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-slate-800">Top Instructors</h2>
-          </div>
+          <h2 className="font-semibold text-slate-800 mb-4">Top Instructors</h2>
           <div className="space-y-3">
-            {instructorStats.map((inst, i) => (
+            {instructorStats.map((inst) => (
               <div key={inst.name} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                   {inst.name.charAt(0)}
@@ -281,7 +275,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Avg loyalty */}
       {isAdmin && (
         <div className="mt-6 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
