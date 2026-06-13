@@ -2,11 +2,13 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { users, courses, getCategoryFromTitle } from '@/lib/dataHelpers';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
-import { Users, BookOpen, TrendingUp, Award, ArrowRight, CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { Users, BookOpen, TrendingUp, Award, ArrowRight, CheckCircle2, Clock, AlertCircle, XCircle, Flame } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/AuthContext';
 import { useAllEnrollments } from '@/hooks/useAllEnrollments';
+import { useEnrollment } from '@/hooks/useEnrollment';
+import { useCourses } from '@/hooks/useCourses';
 
 const STATUS_COLORS = { COMPLETED: '#7c3aed', IN_PROGRESS: '#2563eb', NOT_STARTED: '#94a3b8', DROPPED: '#ef4444' };
 const STATUS_LABELS = { COMPLETED: 'Completed', IN_PROGRESS: 'In Progress', NOT_STARTED: 'Not Started', DROPPED: 'Dropped' };
@@ -27,8 +29,13 @@ function KPICard({ icon: Icon, label, value, sub, color }) {
 }
 
 export default function Dashboard() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user, profile } = useAuth();
   const liveEnrollments = useAllEnrollments(); // null = loading, array = ready
+  const { enrollments: myEnrollments } = useEnrollment(user?.uid);
+  const allCourses = useCourses();
+  const myCompleted = Object.values(myEnrollments).filter(e => e.status === 'COMPLETED').length;
+  const myInProgress = Object.values(myEnrollments).filter(e => e.status === 'IN_PROGRESS').length;
+  const totalCourses = allCourses?.length ?? 0;
   const [firestoreUsers, setFirestoreUsers] = useState([]);
 
   useEffect(() => {
@@ -125,6 +132,30 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold text-slate-800">Dashboard Overview</h1>
         <p className="text-slate-500 text-sm mt-1">ภาพรวมระบบการเรียนรู้และสถิติสำคัญ</p>
       </div>
+
+      {/* User progress summary (non-admin) */}
+      {!isAdmin && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="sm:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-semibold text-slate-700">คอร์สที่เรียนจบแล้ว</p>
+              <span className="text-sm font-bold text-violet-700">{myCompleted} / {totalCourses}</span>
+            </div>
+            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+              <div
+                className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all"
+                style={{ width: `${totalCourses ? Math.round((myCompleted / totalCourses) * 100) : 0}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-400">{myInProgress} คอร์สกำลังเรียนอยู่</p>
+          </div>
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-1">
+            <Flame className="w-8 h-8 text-orange-500" />
+            <p className="text-2xl font-black text-slate-800">{profile?.streak ?? 0}</p>
+            <p className="text-xs text-slate-400">Day Streak 🔥</p>
+          </div>
+        </div>
+      )}
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

@@ -22,6 +22,18 @@ export const AuthProvider = ({ children }) => {
           const snap = await getDoc(docRef);
           if (snap.exists()) {
             const data = snap.data();
+            // Update streak
+            const today = new Date().toISOString().slice(0, 10);
+            const lastLogin = data.last_login_date;
+            const streak = data.streak ?? 0;
+            let newStreak = streak;
+            if (lastLogin !== today) {
+              const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+              newStreak = lastLogin === yesterday ? streak + 1 : 1;
+            }
+            const streakUpdates = lastLogin !== today
+              ? { last_login_date: today, streak: newStreak }
+              : {};
             // If the document exists but is missing name or email, enrich it
             if (!data.email || !data.name) {
               const enrichedProfile = {
@@ -32,13 +44,15 @@ export const AuthProvider = ({ children }) => {
                 loyalty_points: data.loyalty_points !== undefined ? data.loyalty_points : 0,
                 membership_role: data.membership_role || 'MEMBER',
                 role: data.role || 'user',
+                ...streakUpdates,
               };
               await setDoc(docRef, enrichedProfile, { merge: true });
               setRole(enrichedProfile.role);
-              setProfile(enrichedProfile);
+              setProfile({ ...enrichedProfile, streak: newStreak });
             } else {
+              if (Object.keys(streakUpdates).length) await setDoc(docRef, streakUpdates, { merge: true });
               setRole(data.role || 'user');
-              setProfile(data);
+              setProfile({ ...data, streak: newStreak });
             }
           } else {
             // First-time login (e.g. Google) → auto-create profile

@@ -20,6 +20,8 @@ import ResetPassword from '@/pages/ResetPassword';
 import AdminCourses from '@/pages/AdminCourses';
 import AdminLessons from '@/pages/AdminLessons';
 import RewardsStore from '@/pages/RewardsStore';
+import Profile from '@/pages/Profile';
+import Leaderboard from '@/pages/Leaderboard';
 import PageNotFound from '@/lib/PageNotFound';
 import '@/index.css';
 
@@ -40,6 +42,8 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/courses/:id" element={<CourseDetail />} />
                 <Route path="/rewards" element={<RewardsStore />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route element={<AdminRoute />}>
                   <Route path="/users" element={<Users />} />
                   <Route path="/users/:id" element={<UserDetail />} />

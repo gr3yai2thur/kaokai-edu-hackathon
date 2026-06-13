@@ -1,20 +1,24 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut, Award, Star, Zap } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut, Award, Star, Zap, Flame, Trophy, Search, UserCircle } from 'lucide-react';
 
 const BADGE_META = {
   badge_scholar: { label: 'Scholar', icon: BookOpen, cls: 'bg-blue-50 text-blue-600' },
   badge_achiever: { label: 'Achiever', icon: Award, cls: 'bg-amber-50 text-amber-600' },
   badge_elite: { label: 'Elite', icon: Star, cls: 'bg-violet-50 text-violet-600' },
 };
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
+import { useEnrollment } from '@/hooks/useEnrollment';
+import { useCourses } from '@/hooks/useCourses';
 import AiChat from './AiChat';
 
 const allNavItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/courses', label: 'Courses', icon: BookOpen },
   { path: '/rewards', label: 'Rewards Store', icon: Award },
+  { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { path: '/profile', label: 'Profile', icon: UserCircle },
   { path: '/users', label: 'Users', icon: Users, adminOnly: true },
   { path: '/admin/courses', label: 'Manage Courses', icon: BookOpen, adminOnly: true },
 ];
@@ -24,7 +28,18 @@ export default function Layout() {
   const navigate = useNavigate();
   const { user, logout, isAdmin, profile } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin);
+  const { enrollments } = useEnrollment(user?.uid);
+  const allCourses = useCourses();
+  const totalCourses = allCourses?.length ?? 0;
+  const completedCourses = Object.values(enrollments).filter(e => e.status === 'COMPLETED').length;
+  const streak = profile?.streak ?? 0;
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (search.trim()) { navigate(`/courses?q=${encodeURIComponent(search.trim())}`); setSearch(''); }
+  };
 
   const handleLogout = () => {
     logout();
@@ -45,6 +60,19 @@ export default function Layout() {
           </div>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-1">
+          {/* Global Search */}
+          <form onSubmit={handleSearch} className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="ค้นหาคอร์ส..."
+                className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-300"
+              />
+            </div>
+          </form>
           {navItems.map(({ path, label, icon: Icon }) => {
             const active = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
             return (
@@ -69,15 +97,32 @@ export default function Layout() {
             <div className="px-2">
               <p className="text-xs font-medium text-slate-700 truncate">{user.displayName || user.email}</p>
               <p className="text-xs text-slate-400 truncate">{user.email}</p>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
                   <Award className="w-3.5 h-3.5 text-amber-500" />
                   <span className="text-xs font-semibold text-amber-600">{profile?.loyalty_points ?? 0} pts</span>
                 </div>
+                {streak > 0 && (
+                  <div className="flex items-center gap-1 bg-orange-50 px-2 py-1 rounded-lg">
+                    <Flame className="w-3.5 h-3.5 text-orange-500" />
+                    <span className="text-xs font-semibold text-orange-600">{streak} day{streak > 1 ? 's' : ''}</span>
+                  </div>
+                )}
                 {profile?.membership_role === 'VIP' && (
                   <span className="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-lg">VIP</span>
                 )}
               </div>
+              {totalCourses > 0 && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>Courses completed</span>
+                    <span className="font-medium text-slate-600">{completedCourses}/{totalCourses}</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-violet-500 rounded-full transition-all" style={{ width: `${totalCourses ? Math.round((completedCourses / totalCourses) * 100) : 0}%` }} />
+                  </div>
+                </div>
+              )}
               {profile?.badges?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {profile.badges.map(id => {

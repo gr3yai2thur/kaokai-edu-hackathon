@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { courses as staticCourses, getCategoryFromTitle, getLevelFromTitle } from '@/lib/dataHelpers';
 import { Search, BookOpen, Users, ChevronRight, Filter, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,11 @@ export default function Courses() {
   const courses = useCourses() ?? staticCourses;
 
   const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) setSearch(q);
+  }, [searchParams]);
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [levelFilter, setLevelFilter] = useState('All');
   const [instructorFilter, setInstructorFilter] = useState('All');
