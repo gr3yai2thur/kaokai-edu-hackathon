@@ -1,7 +1,8 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/AuthContext';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -11,7 +12,14 @@ const navItems = [
 
 export default function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -46,8 +54,20 @@ export default function Layout() {
             );
           })}
         </nav>
-        <div className="px-6 py-4 border-t border-slate-100">
-          <p className="text-xs text-slate-400">© 2025 LearnHub</p>
+        <div className="px-4 py-4 border-t border-slate-100 space-y-3">
+          {user && (
+            <div className="px-2">
+              <p className="text-xs font-medium text-slate-700 truncate">{user.name}</p>
+              <p className="text-xs text-slate-400 truncate">{user.email}</p>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
         </div>
       </aside>
 
@@ -90,6 +110,13 @@ export default function Layout() {
                   </Link>
                 );
               })}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all mt-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
             </nav>
           </div>
         </div>
