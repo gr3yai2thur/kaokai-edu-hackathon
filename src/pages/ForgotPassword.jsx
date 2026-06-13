@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +16,14 @@ export default function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise(r => setTimeout(r, 500));
-    setLoading(false);
-    setSent(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch {
+      // Always show success to prevent email enumeration
+    } finally {
+      setLoading(false);
+      setSent(true);
+    }
   };
 
   return (

@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect } from 'react';
-import { auth } from '@/api/base44Client';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const AuthContext = createContext();
 
@@ -9,27 +10,22 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   useEffect(() => {
-    if (auth.isAuthenticated()) {
-      setUser(auth.getUser());
-      setIsAuthenticated(true);
-    }
-    setIsLoadingAuth(false);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setIsAuthenticated(!!firebaseUser);
+      setIsLoadingAuth(false);
+    });
+    return unsubscribe;
   }, []);
 
-  const login = (userData) => {
-    auth.setSession(userData);
-    setUser(userData);
-    setIsAuthenticated(true);
-  };
-
-  const logout = () => {
-    auth.clearSession();
+  const logout = async () => {
+    await signOut(auth);
     setUser(null);
     setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoadingAuth, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoadingAuth, logout }}>
       {children}
     </AuthContext.Provider>
   );

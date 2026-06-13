@@ -57,7 +57,7 @@ export default function Layout() {
         <div className="px-4 py-4 border-t border-slate-100 space-y-3">
           {user && (
             <div className="px-2">
-              <p className="text-xs font-medium text-slate-700 truncate">{user.name}</p>
+              <p className="text-xs font-medium text-slate-700 truncate">{user.displayName || user.email}</p>
               <p className="text-xs text-slate-400 truncate">{user.email}</p>
             </div>
           )}

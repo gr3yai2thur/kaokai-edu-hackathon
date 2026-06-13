@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/lib/AuthContext";
-import { users } from "@/lib/dataHelpers";
+import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import GoogleIcon from "@/components/GoogleIcon";
 
 export default function Login() {
-  const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,17 +20,24 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    await new Promise(r => setTimeout(r, 300)); // simulate async
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    // password is email-prefix before @ (demo only)
-    const expectedPassword = email.split("@")[0];
-    if (!user || password !== expectedPassword) {
-      setError("Invalid email or password");
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/");
+    } catch (err) {
+      setError(err.code === "auth/invalid-credential" ? "Invalid email or password" : err.message);
+    } finally {
       setLoading(false);
-      return;
     }
-    login(user);
-    navigate("/");
+  };
+
+  const handleGoogle = async () => {
+    setError("");
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate("/");
+    } catch (err) {
+      if (err.code !== "auth/popup-closed-by-user") setError(err.message);
+    }
   };
 
   return (
@@ -45,14 +52,19 @@ export default function Login() {
         </>
       }
     >
-      <div className="mb-4 p-3 rounded-lg bg-muted text-muted-foreground text-xs">
-        <strong>Demo:</strong> Use any email from the system. Password = part before @<br />
-        e.g. <code>somchai@example.com</code> / <code>somchai</code>
+      <Button variant="outline" className="w-full h-12 text-sm font-medium mb-6" onClick={handleGoogle}>
+        <GoogleIcon className="w-5 h-5 mr-2" />
+        Continue with Google
+      </Button>
+
+      <div className="relative mb-6">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-card px-3 text-muted-foreground">or</span>
+        </div>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>
-      )}
+      {error && <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
