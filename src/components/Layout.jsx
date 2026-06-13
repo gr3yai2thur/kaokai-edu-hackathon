@@ -3,6 +3,7 @@ import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut } from
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
+import AiChat from './AiChat';
 
 const allNavItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -129,6 +130,7 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+      <AiChat />
     </div>
   );
 }
