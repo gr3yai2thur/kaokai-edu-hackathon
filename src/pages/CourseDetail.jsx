@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { courses, users, enrollments, getCategoryFromTitle, getLevelFromTitle, getCourseStats } from '@/lib/dataHelpers';
-import { ArrowLeft, BookOpen, Users, Award, Clock, TrendingUp, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Users, Award, Clock, TrendingUp, CheckCircle2, XCircle, AlertCircle, Star } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useAuth } from '@/lib/AuthContext';
+import { useEnrollment, calcCoursePoints } from '@/hooks/useEnrollment';
 
 const STATUS_COLORS = { COMPLETED: '#7c3aed', IN_PROGRESS: '#2563eb', NOT_STARTED: '#94a3b8', DROPPED: '#ef4444' };
 const STATUS_LABELS = { COMPLETED: 'Completed', IN_PROGRESS: 'In Progress', NOT_STARTED: 'Not Started', DROPPED: 'Dropped' };
@@ -14,6 +17,10 @@ const STATUS_BADGE = {
 
 export default function CourseDetail() {
   const { id } = useParams();
+  const { user, refreshProfile } = useAuth();
+  const { enrollments: myEnrollments, enroll, drop, complete } = useEnrollment(user?.uid);
+  const [actionLoading, setActionLoading] = useState(false);
+
   const course = courses.find(c => c.course_id === id);
 
   if (!course) {
@@ -24,6 +31,18 @@ export default function CourseDetail() {
       </div>
     );
   }
+
+  const myEnrollment = myEnrollments[id];
+  const myStatus = myEnrollment?.status;
+  const pts = calcCoursePoints(course.total_lessons);
+
+  const handleAction = async (action) => {
+    setActionLoading(true);
+    if (action === 'enroll') await enroll(id);
+    else if (action === 'drop') await drop(id);
+    else if (action === 'complete') await complete(id, course.total_lessons, refreshProfile);
+    setActionLoading(false);
+  };
 
   const stats = getCourseStats(id);
   const category = getCategoryFromTitle(course.title);
@@ -64,7 +83,48 @@ export default function CourseDetail() {
           <span className="flex items-center gap-1.5 text-violet-200">
             <TrendingUp className="w-4 h-4" /> {stats.avgProgress}% avg progress
           </span>
+          <span className="flex items-center gap-1.5 text-amber-300">
+            <Star className="w-4 h-4" /> {pts} pts เมื่อจบคอร์ส
+          </span>
         </div>
+
+        {/* Enrollment actions for logged-in user */}
+        {user && (
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            {!myStatus && (
+              <button disabled={actionLoading} onClick={() => handleAction('enroll')}
+                className="bg-white text-violet-700 hover:bg-violet-50 disabled:opacity-60 font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors">
+                {actionLoading ? '...' : '▶ เริ่มเรียน'}
+              </button>
+            )}
+            {myStatus === 'IN_PROGRESS' && (
+              <>
+                <div className="flex-1 min-w-48">
+                  <div className="flex justify-between text-xs text-violet-200 mb-1">
+                    <span>Progress</span>
+                    <span>{myEnrollment.progress_percent}%</span>
+                  </div>
+                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-white rounded-full transition-all" style={{ width: `${myEnrollment.progress_percent}%` }} />
+                  </div>
+                </div>
+                <button disabled={actionLoading} onClick={() => handleAction('complete')}
+                  className="bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors">
+                  {actionLoading ? '...' : '✓ เรียนจบแล้ว'}
+                </button>
+                <button disabled={actionLoading} onClick={() => handleAction('drop')}
+                  className="bg-white/10 hover:bg-white/20 disabled:opacity-60 text-white text-sm px-4 py-2.5 rounded-xl transition-colors">
+                  Drop
+                </button>
+              </>
+            )}
+            {myStatus === 'COMPLETED' && (
+              <span className="bg-white/20 text-white text-sm font-medium px-4 py-2.5 rounded-xl">
+                ✓ เรียนจบแล้ว (+{pts} pts)
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Stats cards */}

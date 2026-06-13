@@ -74,8 +74,18 @@ export const AuthProvider = ({ children }) => {
     await signOut(auth);
   };
 
+  const refreshProfile = async () => {
+    if (!user) return;
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists()) setProfile(snap.data());
+    } catch (err) {
+      console.error('refreshProfile error:', err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, role, isAdmin: role === 'admin', isAuthenticated, isLoadingAuth, logout }}>
+    <AuthContext.Provider value={{ user, profile, role, isAdmin: role === 'admin', isAuthenticated, isLoadingAuth, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

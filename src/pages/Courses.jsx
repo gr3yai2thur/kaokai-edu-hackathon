@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { courses, enrollments, getCategoryFromTitle, getLevelFromTitle } from '@/lib/dataHelpers';
-import { Search, BookOpen, Users, ChevronRight, Filter } from 'lucide-react';
+import { Search, BookOpen, Users, ChevronRight, Filter, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/AuthContext';
+import { useEnrollment, calcCoursePoints } from '@/hooks/useEnrollment';
 
 const CATEGORY_COLORS = {
   Programming: 'bg-blue-100 text-blue-700',
@@ -20,11 +22,15 @@ const LEVEL_COLORS = {
 };
 
 export default function Courses() {
+  const { user, refreshProfile } = useAuth();
+  const { enrollments: myEnrollments, enroll, drop, complete } = useEnrollment(user?.uid);
+
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [levelFilter, setLevelFilter] = useState('All');
   const [instructorFilter, setInstructorFilter] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [pending, setPending] = useState({});
 
   const allCategories = ['All', 'Programming', 'Tech & Data', 'Creative', 'Business'];
   const allLevels = ['All', 'Beginner', 'Intermediate', 'Advanced'];
@@ -50,6 +56,27 @@ export default function Courses() {
   }), [enriched, search, categoryFilter, levelFilter, instructorFilter]);
 
   const hasActiveFilters = categoryFilter !== 'All' || levelFilter !== 'All' || instructorFilter !== 'All';
+
+  const handleEnroll = async (e, courseId) => {
+    e.preventDefault();
+    setPending(p => ({ ...p, [courseId]: true }));
+    await enroll(courseId);
+    setPending(p => ({ ...p, [courseId]: false }));
+  };
+
+  const handleDrop = async (e, courseId) => {
+    e.preventDefault();
+    setPending(p => ({ ...p, [courseId]: true }));
+    await drop(courseId);
+    setPending(p => ({ ...p, [courseId]: false }));
+  };
+
+  const handleComplete = async (e, courseId, totalLessons) => {
+    e.preventDefault();
+    setPending(p => ({ ...p, [courseId]: true }));
+    await complete(courseId, totalLessons, refreshProfile);
+    setPending(p => ({ ...p, [courseId]: false }));
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -92,11 +119,9 @@ export default function Courses() {
               <label className="text-xs font-semibold text-slate-500 mb-2 block">Category</label>
               <div className="flex flex-wrap gap-2">
                 {allCategories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategoryFilter(cat)}
-                    className={cn('px-3 py-1 rounded-full text-xs font-medium transition-all', categoryFilter === cat ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}
-                  >
+                  <button key={cat} onClick={() => setCategoryFilter(cat)}
+                    className={cn('px-3 py-1 rounded-full text-xs font-medium transition-all',
+                      categoryFilter === cat ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
                     {cat}
                   </button>
                 ))}
@@ -106,11 +131,9 @@ export default function Courses() {
               <label className="text-xs font-semibold text-slate-500 mb-2 block">Level</label>
               <div className="flex flex-wrap gap-2">
                 {allLevels.map(lv => (
-                  <button
-                    key={lv}
-                    onClick={() => setLevelFilter(lv)}
-                    className={cn('px-3 py-1 rounded-full text-xs font-medium transition-all', levelFilter === lv ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}
-                  >
+                  <button key={lv} onClick={() => setLevelFilter(lv)}
+                    className={cn('px-3 py-1 rounded-full text-xs font-medium transition-all',
+                      levelFilter === lv ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
                     {lv}
                   </button>
                 ))}
@@ -118,11 +141,8 @@ export default function Courses() {
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 mb-2 block">Instructor</label>
-              <select
-                value={instructorFilter}
-                onChange={e => setInstructorFilter(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 bg-slate-50"
-              >
+              <select value={instructorFilter} onChange={e => setInstructorFilter(e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 bg-slate-50">
                 {allInstructors.map(ins => <option key={ins} value={ins}>{ins}</option>)}
               </select>
             </div>
@@ -130,41 +150,104 @@ export default function Courses() {
         )}
       </div>
 
-      {/* Grid */}
+      {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map(course => (
-          <Link
-            key={course.course_id}
-            to={`/courses/${course.course_id}`}
-            className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-violet-200 transition-all group"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex gap-2 flex-wrap">
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${CATEGORY_COLORS[course.category]}`}>
-                  {course.category}
+        {filtered.map(course => {
+          const enrollment = myEnrollments[course.course_id];
+          const status = enrollment?.status;
+          const isLoading = pending[course.course_id];
+          const pts = calcCoursePoints(course.total_lessons);
+
+          return (
+            <Link
+              key={course.course_id}
+              to={`/courses/${course.course_id}`}
+              className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-violet-200 transition-all group flex flex-col"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex gap-2 flex-wrap">
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${CATEGORY_COLORS[course.category]}`}>
+                    {course.category}
+                  </span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${LEVEL_COLORS[course.level]}`}>
+                    {course.level}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-violet-500 transition-colors flex-shrink-0" />
+              </div>
+
+              <h3 className="font-semibold text-slate-800 text-sm leading-snug mb-1 group-hover:text-violet-700 transition-colors">
+                {course.title}
+              </h3>
+              <p className="text-xs text-slate-400 mb-3">by {course.instructor}</p>
+
+              <div className="flex items-center gap-1 mb-3">
+                <Star className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs text-amber-600 font-medium">{pts} pts เมื่อจบคอร์ส</span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                <span className="flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                  {course.total_lessons} lessons
                 </span>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${LEVEL_COLORS[course.level]}`}>
-                  {course.level}
+                <span className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-violet-400" />
+                  <span className="font-medium text-violet-600">{course.enrollmentCount} enrolled</span>
                 </span>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-violet-500 transition-colors flex-shrink-0" />
-            </div>
-            <h3 className="font-semibold text-slate-800 text-sm leading-snug mb-1 group-hover:text-violet-700 transition-colors">
-              {course.title}
-            </h3>
-            <p className="text-xs text-slate-400 mb-4">by {course.instructor}</p>
-            <div className="flex items-center justify-between text-xs text-slate-500">
-              <span className="flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-slate-400" />
-                {course.total_lessons} lessons
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-violet-400" />
-                <span className="font-medium text-violet-600">{course.enrollmentCount} enrolled</span>
-              </span>
-            </div>
-          </Link>
-        ))}
+
+              {status === 'IN_PROGRESS' && (
+                <div className="mb-3">
+                  <div className="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>Progress</span>
+                    <span>{enrollment.progress_percent}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-violet-500 rounded-full" style={{ width: `${enrollment.progress_percent}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {user && (
+                <div className="mt-auto pt-1 flex gap-2" onClick={e => e.preventDefault()}>
+                  {!status && (
+                    <button
+                      disabled={isLoading}
+                      onClick={e => handleEnroll(e, course.course_id)}
+                      className="flex-1 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-xl transition-colors"
+                    >
+                      {isLoading ? '...' : 'เริ่มเรียน'}
+                    </button>
+                  )}
+                  {status === 'IN_PROGRESS' && (
+                    <>
+                      <button
+                        disabled={isLoading}
+                        onClick={e => handleComplete(e, course.course_id, course.total_lessons)}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-xl transition-colors"
+                      >
+                        {isLoading ? '...' : 'เรียนจบแล้ว ✓'}
+                      </button>
+                      <button
+                        disabled={isLoading}
+                        onClick={e => handleDrop(e, course.course_id)}
+                        className="px-3 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 text-xs font-medium py-2 rounded-xl transition-colors"
+                      >
+                        Drop
+                      </button>
+                    </>
+                  )}
+                  {status === 'COMPLETED' && (
+                    <span className="flex-1 text-center text-xs font-medium text-emerald-600 bg-emerald-50 py-2 rounded-xl">
+                      ✓ เรียนจบแล้ว (+{pts} pts)
+                    </span>
+                  )}
+                </div>
+              )}
+            </Link>
+          );
+        })}
       </div>
 
       {filtered.length === 0 && (
