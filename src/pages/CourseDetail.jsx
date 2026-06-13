@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { users, enrollments, getCategoryFromTitle, getLevelFromTitle, getCourseStats } from '@/lib/dataHelpers';
-import { ArrowLeft, BookOpen, Users, Award, Clock, TrendingUp, CheckCircle2, XCircle, AlertCircle, Star } from 'lucide-react';
+import { ArrowLeft, BookOpen, Users, Award, Clock, TrendingUp, CheckCircle2, XCircle, AlertCircle, Star, Download } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '@/lib/AuthContext';
 import { useEnrollment, calcCoursePoints } from '@/hooks/useEnrollment';
 import { useCourses } from '@/hooks/useCourses';
 import CourseLessons from '@/components/CourseLessons';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 const STATUS_COLORS = { COMPLETED: '#7c3aed', IN_PROGRESS: '#2563eb', NOT_STARTED: '#94a3b8', DROPPED: '#ef4444' };
 const STATUS_LABELS = { COMPLETED: 'Completed', IN_PROGRESS: 'In Progress', NOT_STARTED: 'Not Started', DROPPED: 'Dropped' };
@@ -23,7 +25,9 @@ export default function CourseDetail() {
   const { enrollments: myEnrollments, enroll, drop, complete } = useEnrollment(user?.uid);
   const [actionLoading, setActionLoading] = useState(false);
   const allCourses = useCourses();
-  const [lessonCount, setLessonCount] = useState(null); // null = unknown, 0 = no lessons
+  const [lessonCount, setLessonCount] = useState(null);
+  const [certLoading, setCertLoading] = useState(false);
+  const certRef = useRef(null);
 
   const course = allCourses?.find(c => c.course_id === id);
 
@@ -52,6 +56,20 @@ export default function CourseDetail() {
     setActionLoading(false);
   };
 
+  const downloadCert = async () => {
+    if (!certRef.current || certLoading) return;
+    setCertLoading(true);
+    try {
+      const canvas = await html2canvas(certRef.current, { scale: 3, useCORS: true, backgroundColor: null });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+      pdf.save(`Certificate_${course.title.replace(/\s+/g, '_')}.pdf`);
+    } finally {
+      setCertLoading(false);
+    }
+  };
+
   const stats = getCourseStats(id);
   const category = getCategoryFromTitle(course.title);
   const level = getLevelFromTitle(course.title);
@@ -67,6 +85,7 @@ export default function CourseDetail() {
   ].filter(d => d.value > 0);
 
   return (
+    <>
     <div className="p-6 max-w-5xl mx-auto">
       {/* Back */}
       <Link to="/courses" className="inline-flex items-center gap-2 text-slate-500 hover:text-violet-600 text-sm mb-6 transition-colors">
@@ -143,9 +162,19 @@ export default function CourseDetail() {
               </>
             )}
             {myStatus === 'COMPLETED' && (
-              <span className="bg-white/20 text-white text-sm font-medium px-4 py-2.5 rounded-xl">
-                ✓ เรียนจบแล้ว (+{pts} pts)
-              </span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="bg-white/20 text-white text-sm font-medium px-4 py-2.5 rounded-xl">
+                  ✓ เรียนจบแล้ว (+{pts} pts)
+                </span>
+                <button
+                  onClick={downloadCert}
+                  disabled={certLoading}
+                  className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 disabled:opacity-60 text-amber-900 font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  {certLoading ? 'กำลังสร้าง PDF...' : '📜 รับใบประกาศนียบัตร'}
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -291,5 +320,91 @@ export default function CourseDetail() {
       </div>
       </>}
     </div>
+
+    {/* Hidden certificate template for PDF export */}
+    {myStatus === 'COMPLETED' && (
+      <div className="fixed -left-[9999px] -top-[9999px]">
+        <div
+          ref={certRef}
+          style={{
+            width: '1122px', height: '794px',
+            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%)',
+            position: 'relative', overflow: 'hidden', fontFamily: 'Georgia, serif',
+          }}
+        >
+          {/* Corner decorations */}
+          {[['top-0 left-0','border-t-8 border-l-8'],['top-0 right-0','border-t-8 border-r-8'],['bottom-0 left-0','border-b-8 border-l-8'],['bottom-0 right-0','border-b-8 border-r-8']].map(([pos, border], i) => (
+            <div key={i} className={`absolute ${pos} w-20 h-20 ${border} border-amber-400 opacity-80`} />
+          ))}
+
+          {/* Watermark circles */}
+          <div style={{ position:'absolute', top:'-80px', right:'-80px', width:'320px', height:'320px', borderRadius:'50%', background:'rgba(255,255,255,0.03)' }} />
+          <div style={{ position:'absolute', bottom:'-60px', left:'-60px', width:'240px', height:'240px', borderRadius:'50%', background:'rgba(255,255,255,0.03)' }} />
+
+          {/* Inner border */}
+          <div style={{ position:'absolute', inset:'24px', border:'1.5px solid rgba(251,191,36,0.4)', borderRadius:'8px' }} />
+
+          {/* Content */}
+          <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', padding:'48px', textAlign:'center' }}>
+
+            {/* Header badge */}
+            <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'24px' }}>
+              <div style={{ height:'1px', width:'80px', background:'linear-gradient(to right, transparent, #fbbf24)' }} />
+              <span style={{ color:'#fbbf24', fontSize:'13px', letterSpacing:'4px', fontFamily:'Arial, sans-serif', fontWeight:600, textTransform:'uppercase' }}>KaoKai Education Platform</span>
+              <div style={{ height:'1px', width:'80px', background:'linear-gradient(to left, transparent, #fbbf24)' }} />
+            </div>
+
+            {/* Title */}
+            <div style={{ fontSize:'42px', fontWeight:'bold', color:'#fbbf24', letterSpacing:'6px', textTransform:'uppercase', marginBottom:'8px', textShadow:'0 2px 12px rgba(251,191,36,0.4)' }}>
+              Certificate
+            </div>
+            <div style={{ fontSize:'16px', color:'rgba(196,181,253,0.9)', letterSpacing:'8px', textTransform:'uppercase', marginBottom:'36px', fontFamily:'Arial, sans-serif' }}>
+              of Completion
+            </div>
+
+            {/* Divider */}
+            <div style={{ display:'flex', alignItems:'center', gap:'16px', marginBottom:'32px', width:'60%' }}>
+              <div style={{ flex:1, height:'1px', background:'linear-gradient(to right, transparent, rgba(251,191,36,0.5))' }} />
+              <div style={{ width:'8px', height:'8px', background:'#fbbf24', borderRadius:'50%', transform:'rotate(45deg)' }} />
+              <div style={{ flex:1, height:'1px', background:'linear-gradient(to left, transparent, rgba(251,191,36,0.5))' }} />
+            </div>
+
+            <div style={{ color:'rgba(196,181,253,0.8)', fontSize:'15px', letterSpacing:'2px', marginBottom:'16px', fontFamily:'Arial, sans-serif' }}>
+              THIS IS TO CERTIFY THAT
+            </div>
+
+            {/* Name */}
+            <div style={{ fontSize:'48px', color:'#ffffff', fontWeight:'bold', marginBottom:'8px', textShadow:'0 2px 20px rgba(139,92,246,0.6)', letterSpacing:'2px' }}>
+              {user?.displayName || user?.email}
+            </div>
+            <div style={{ width:'320px', height:'2px', background:'linear-gradient(to right, transparent, #a78bfa, transparent)', marginBottom:'28px' }} />
+
+            <div style={{ color:'rgba(196,181,253,0.8)', fontSize:'15px', letterSpacing:'2px', marginBottom:'16px', fontFamily:'Arial, sans-serif' }}>
+              HAS SUCCESSFULLY COMPLETED
+            </div>
+
+            {/* Course title */}
+            <div style={{ fontSize:'22px', color:'#e0e7ff', fontWeight:600, maxWidth:'680px', lineHeight:1.4, marginBottom:'8px' }}>
+              "{course.title}"
+            </div>
+            <div style={{ color:'rgba(167,139,250,0.7)', fontSize:'14px', marginBottom:'40px', fontFamily:'Arial, sans-serif' }}>
+              Instructor: {course.instructor}
+            </div>
+
+            {/* Footer */}
+            <div style={{ display:'flex', alignItems:'center', gap:'16px', marginBottom:'24px', width:'60%' }}>
+              <div style={{ flex:1, height:'1px', background:'linear-gradient(to right, transparent, rgba(251,191,36,0.3))' }} />
+              <div style={{ width:'6px', height:'6px', background:'rgba(251,191,36,0.5)', borderRadius:'50%', transform:'rotate(45deg)' }} />
+              <div style={{ flex:1, height:'1px', background:'linear-gradient(to left, transparent, rgba(251,191,36,0.3))' }} />
+            </div>
+
+            <div style={{ color:'rgba(148,163,184,0.7)', fontSize:'12px', letterSpacing:'3px', fontFamily:'Arial, sans-serif', textTransform:'uppercase' }}>
+              {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
