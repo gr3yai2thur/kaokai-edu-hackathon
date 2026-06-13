@@ -1,18 +1,33 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setIsAuthenticated(!!firebaseUser);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        setIsAuthenticated(true);
+        // fetch role from Firestore
+        try {
+          const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+          setRole(snap.exists() ? snap.data().role : 'user');
+        } catch {
+          setRole('user');
+        }
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        setRole(null);
+      }
       setIsLoadingAuth(false);
     });
     return unsubscribe;
@@ -20,12 +35,10 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     await signOut(auth);
-    setUser(null);
-    setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoadingAuth, logout }}>
+    <AuthContext.Provider value={{ user, role, isAdmin: role === 'admin', isAuthenticated, isLoadingAuth, logout }}>
       {children}
     </AuthContext.Provider>
   );
