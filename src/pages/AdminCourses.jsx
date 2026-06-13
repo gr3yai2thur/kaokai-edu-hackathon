@@ -6,7 +6,7 @@ import { useCourses } from '@/hooks/useCourses';
 import { getCategoryFromTitle, getLevelFromTitle } from '@/lib/dataHelpers';
 import { Plus, Pencil, Trash2, X, BookOpen } from 'lucide-react';
 
-const EMPTY_FORM = { course_id: '', title: '', instructor: '', total_lessons: '', description: '' };
+const EMPTY_FORM = { course_id: '', title: '', instructor: '', total_lessons: '', description: '', youtube_url: '' };
 
 export default function AdminCourses() {
   const courses = useCourses() ?? [];
@@ -16,7 +16,7 @@ export default function AdminCourses() {
   const [deleteId, setDeleteId] = useState(null);
 
   const openAdd = () => { setForm(EMPTY_FORM); setModal({ mode: 'add' }); };
-  const openEdit = (course) => { setForm({ ...course, total_lessons: String(course.total_lessons) }); setModal({ mode: 'edit' }); };
+  const openEdit = (course) => { setForm({ ...course, total_lessons: String(course.total_lessons), youtube_url: course.youtube_url ?? '' }); setModal({ mode: 'edit' }); };
 
   const handleSave = async () => {
     if (!form.title.trim() || !form.instructor.trim()) return;
@@ -29,6 +29,7 @@ export default function AdminCourses() {
       instructor: form.instructor.trim(),
       total_lessons: parseInt(form.total_lessons) || 1,
       description: form.description.trim(),
+      youtube_url: form.youtube_url.trim(),
     });
     setSaving(false);
     setModal(null);
@@ -126,6 +127,11 @@ export default function AdminCourses() {
                 <label className="text-xs font-semibold text-slate-500 block mb-1">Description</label>
                 <textarea rows={3} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 resize-none" placeholder="คำอธิบายคอร์ส..." />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-500 block mb-1">YouTube Preview URL</label>
+                <input value={form.youtube_url} onChange={e => setForm(f => ({ ...f, youtube_url: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300" placeholder="https://youtube.com/watch?v=..." />
               </div>
             </div>
             <div className="flex gap-3 mt-6">

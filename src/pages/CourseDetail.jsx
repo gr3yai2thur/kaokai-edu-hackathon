@@ -80,6 +80,17 @@ export default function CourseDetail() {
         {course.description && (
           <p className="text-violet-100 text-sm mt-3 leading-relaxed max-w-2xl">{course.description}</p>
         )}
+        {course.youtube_url && (() => {
+          const match = course.youtube_url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+          const vid = match?.[1];
+          return vid ? (
+            <div className="mt-4 aspect-video w-full max-w-xl rounded-xl overflow-hidden shadow-lg">
+              <iframe src={`https://www.youtube.com/embed/${vid}?rel=0`}
+                title={course.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen className="w-full h-full" />
+            </div>
+          ) : null;
+        })()}
         <div className="flex flex-wrap gap-4 mt-4 text-sm">
           <span className="flex items-center gap-1.5 text-violet-200">
             <BookOpen className="w-4 h-4" /> {course.total_lessons} lessons
