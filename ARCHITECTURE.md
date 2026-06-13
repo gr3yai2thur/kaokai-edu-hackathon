@@ -1,13 +1,13 @@
-# KaoKai Education Platform — เอกสารโครงการ
+# KaoKai Education Platform — Architecture
 
 ## สารบัญ
 - [ภาพรวม](#ภาพรวม)
 - [Tech Stack](#tech-stack)
-- [สถาปัตยกรรม (Architecture)](#สถาปัตยกรรม)
+- [สถาปัตยกรรม](#สถาปัตยกรรม)
 - [โครงสร้างโปรเจกต์](#โครงสร้างโปรเจกต์)
 - [Firestore Data Model](#firestore-data-model)
-- [การใช้งานเว็บ](#การใช้งานเว็บ)
-- [การรัน / Deploy](#การรัน--deploy)
+
+> การใช้งานและคำสั่ง deploy ดูได้ที่ [README.md](./README.md)
 
 ---
 
@@ -172,75 +172,4 @@ lessons/{lessonId}
 └── quiz: { question, options[], answer }?
 ```
 
----
 
-## การใช้งานเว็บ
-
-### สำหรับผู้เรียน (User)
-
-| หน้า | การใช้งาน |
-|------|-----------|
-| **Dashboard** | เห็น progress bar รวม (จบ X/Y คอร์ส), streak ของวัน, กราฟความนิยมคอร์ส |
-| **Courses** | ค้นหาคอร์สด้วยชื่อ/อาจารย์, กรอง category/level/instructor, กดเริ่มเรียน, drop, หรือ mark complete |
-| **Course Detail** | ดูวิดีโอ YouTube preview, ดูบทเรียนทั้งหมด, เรียนผ่าน video player, เมื่อ complete ดาวน์โหลด Certificate PDF |
-| **Rewards Store** | แลก points ที่ได้จากการเรียนจบคอร์สเป็น Badge หรือ AI Boost (7 วัน) |
-| **Leaderboard** | ดูอันดับผู้ใช้ทั้งหมดตาม points, ไฮไลต์ตัวเอง |
-| **Profile** | แก้ชื่อแสดงผล, ดู stats (points, streak, จำนวนคอร์สจบ), badges ที่มี |
-| **AI Chat** | กดปุ่ม chat มุมขวาล่าง ถามคำถามเกี่ยวกับการเรียนได้ตลอด (ต้องมี AI Boost หรือ quota ปกติ) |
-| **Global Search** | พิมพ์ชื่อคอร์สในช่อง search ที่ sidebar กด Enter → ไปหน้า Courses พร้อม filter |
-
-### Loyalty Points
-- เรียนจบ 1 คอร์ส = `จำนวน lessons × 10` points
-- สะสมครบ 1,000 pts → อัปเกรดเป็น **VIP** อัตโนมัติ
-
-### Streak
-- Login ทุกวันติดต่อกัน → streak +1
-- หยุด 1 วัน → streak reset เป็น 1
-
----
-
-### สำหรับ Admin
-
-| หน้า | การใช้งาน |
-|------|-----------|
-| **Dashboard** | เห็น KPI ทั้งหมด: total users, courses, enrollments, completion rate, pie chart status breakdown, student summary |
-| **Users** | รายชื่อผู้ใช้ทั้งหมด, ค้นหา, กรอง role |
-| **User Detail** | ดู enrollment history ของ user แต่ละคน |
-| **Manage Courses** | เพิ่ม/แก้ไข/ลบคอร์ส, ใส่ YouTube URL preview |
-| **Manage Lessons** | จัดการ lesson ในแต่ละคอร์ส, เพิ่ม quiz หลังวิดีโอ |
-
----
-
-## การรัน / Deploy
-
-### รัน Local
-```bash
-npm install
-npm run dev
-```
-
-### Build
-```bash
-npm run build
-# output อยู่ที่ dist/
-```
-
-### Environment Variables
-สร้างไฟล์ `.env` ที่ root:
-```
-VITE_FIREBASE_API_KEY=...
-VITE_FIREBASE_AUTH_DOMAIN=...
-VITE_FIREBASE_PROJECT_ID=...
-VITE_FIREBASE_STORAGE_BUCKET=...
-VITE_FIREBASE_MESSAGING_SENDER_ID=...
-VITE_FIREBASE_APP_ID=...
-VITE_GEMINI_API_KEY=...
-```
-
-### Deploy
-โปรเจกต์นี้เป็น static SPA — deploy ได้บน **Vercel**, **Netlify**, หรือ **Firebase Hosting**
-```bash
-# Firebase Hosting
-npm run build
-firebase deploy
-```
