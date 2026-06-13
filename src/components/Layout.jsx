@@ -4,17 +4,18 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
 
-const navItems = [
+const allNavItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/courses', label: 'Courses', icon: BookOpen },
-  { path: '/users', label: 'Users', icon: Users },
+  { path: '/users', label: 'Users', icon: Users, adminOnly: true },
 ];
 
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin);
 
   const handleLogout = () => {
     logout();
