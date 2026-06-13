@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, doc, setDoc, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { updateDoc } from 'firebase/firestore';
-import { CheckCircle2, Circle, PlayCircle, Lock } from 'lucide-react';
+import { CheckCircle2, Circle, PlayCircle, Lock, XCircle } from 'lucide-react';
 
-// Extract YouTube video ID from various URL formats
 function extractYouTubeId(url) {
   if (!url) return null;
   const match = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
@@ -15,21 +13,22 @@ export default function CourseLessons({ courseId, enrollmentId, isEnrolled, onPr
   const [lessons, setLessons] = useState([]);
   const [completedSet, setCompletedSet] = useState(new Set());
   const [activeLesson, setActiveLesson] = useState(null);
+  const [quiz, setQuiz] = useState(null); // null=none/loading, object=has quiz
+  const [quizState, setQuizState] = useState('hidden'); // 'hidden'|'show'|'correct'|'wrong'
+  const [selected, setSelected] = useState(null);
 
-  // Load lessons for this course
+  // Load lessons
   useEffect(() => {
     if (!courseId) return;
     const unsub = onSnapshot(collection(db, 'courses', courseId, 'lessons'), snap => {
-      const data = snap.docs
-        .map(d => ({ lesson_id: d.id, ...d.data() }))
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const data = snap.docs.map(d => ({ lesson_id: d.id, ...d.data() })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       setLessons(data);
-      if (data.length > 0 && !activeLesson) setActiveLesson(data[0]);
+      if (data.length > 0) setActiveLesson(prev => prev ?? data[0]);
     });
     return unsub;
   }, [courseId]);
 
-  // Load completed lessons for this enrollment
+  // Load completed lessons
   useEffect(() => {
     if (!enrollmentId) return;
     const unsub = onSnapshot(collection(db, 'enrollments', enrollmentId, 'completed_lessons'), snap => {
@@ -38,13 +37,37 @@ export default function CourseLessons({ courseId, enrollmentId, isEnrolled, onPr
     return unsub;
   }, [enrollmentId]);
 
-  const markComplete = async (lessonId) => {
-    if (!enrollmentId || completedSet.has(lessonId)) return;
-    await setDoc(doc(db, 'enrollments', enrollmentId, 'completed_lessons', lessonId), { completed_at: new Date() });
-    const newCompleted = new Set([...completedSet, lessonId]);
-    const progress = lessons.length > 0 ? Math.round((newCompleted.size / lessons.length) * 100) : 0;
+  // Load quiz when active lesson changes
+  useEffect(() => {
+    if (!activeLesson) return;
+    setQuizState('hidden');
+    setSelected(null);
+    setQuiz(null);
+    getDoc(doc(db, 'courses', courseId, 'lessons', activeLesson.lesson_id, 'quiz', 'q1'))
+      .then(snap => setQuiz(snap.exists() ? snap.data() : false));
+  }, [activeLesson?.lesson_id]);
+
+  const selectLesson = (lesson) => {
+    setActiveLesson(lesson);
+  };
+
+  const handleMarkComplete = async () => {
+    if (!enrollmentId || !activeLesson || completedSet.has(activeLesson.lesson_id)) return;
+    await setDoc(doc(db, 'enrollments', enrollmentId, 'completed_lessons', activeLesson.lesson_id), { completed_at: new Date() });
+    const newSize = completedSet.size + 1;
+    const progress = lessons.length > 0 ? Math.round((newSize / lessons.length) * 100) : 0;
     await updateDoc(doc(db, 'enrollments', enrollmentId), { progress_percent: progress });
     if (onProgressUpdate) onProgressUpdate(progress);
+  };
+
+  const handleQuizSubmit = async () => {
+    if (selected === null || !quiz) return;
+    if (selected === quiz.answer) {
+      setQuizState('correct');
+      await handleMarkComplete();
+    } else {
+      setQuizState('wrong');
+    }
   };
 
   if (lessons.length === 0) {
@@ -57,52 +80,98 @@ export default function CourseLessons({ courseId, enrollmentId, isEnrolled, onPr
   }
 
   const videoId = extractYouTubeId(activeLesson?.video_url);
+  const isDone = activeLesson && completedSet.has(activeLesson.lesson_id);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Video Player */}
-      <div className="lg:col-span-2">
+      {/* Video + Quiz */}
+      <div className="lg:col-span-2 space-y-4">
         {activeLesson && (
-          <div>
+          <>
             {videoId ? (
               <div className="aspect-video rounded-2xl overflow-hidden bg-black shadow">
-                <iframe
-                  key={videoId}
-                  src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-                  title={activeLesson.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full"
-                />
+                <iframe key={videoId} src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                  title={activeLesson.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen className="w-full h-full" />
               </div>
             ) : (
               <div className="aspect-video rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
-                <div className="text-center">
-                  <PlayCircle className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">ไม่มี Video URL</p>
-                </div>
+                <div className="text-center"><PlayCircle className="w-12 h-12 mx-auto mb-2 opacity-30" /><p className="text-sm">ไม่มี Video URL</p></div>
               </div>
             )}
-            <div className="mt-3 flex items-center justify-between">
+
+            <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-semibold text-slate-800">{activeLesson.title}</h3>
                 {activeLesson.duration && <p className="text-xs text-slate-400 mt-0.5">{activeLesson.duration}</p>}
               </div>
-              {isEnrolled && !completedSet.has(activeLesson.lesson_id) && (
-                <button
-                  onClick={() => markComplete(activeLesson.lesson_id)}
-                  className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-3 py-2 rounded-xl transition-colors"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Mark Complete
-                </button>
-              )}
-              {isEnrolled && completedSet.has(activeLesson.lesson_id) && (
-                <span className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
+              {isDone && (
+                <span className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium flex-shrink-0">
                   <CheckCircle2 className="w-4 h-4" /> Completed
                 </span>
               )}
             </div>
-          </div>
+
+            {/* Quiz section */}
+            {isEnrolled && !isDone && (
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                {quiz === null && <p className="text-sm text-slate-400">Loading...</p>}
+
+                {quiz === false && (
+                  /* No quiz — direct mark complete */
+                  <button onClick={handleMarkComplete}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2.5 rounded-xl transition-colors">
+                    Mark Complete ✓
+                  </button>
+                )}
+
+                {quiz && quizState === 'hidden' && (
+                  <button onClick={() => setQuizState('show')}
+                    className="w-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium py-2.5 rounded-xl transition-colors">
+                    ทำแบบทดสอบเพื่อ Mark Complete
+                  </button>
+                )}
+
+                {quiz && quizState === 'show' && (
+                  <div>
+                    <p className="font-medium text-slate-800 text-sm mb-4">{quiz.question}</p>
+                    <div className="space-y-2 mb-4">
+                      {quiz.choices?.map((c, i) => (
+                        <button key={i} onClick={() => setSelected(i)}
+                          className={`w-full text-left text-sm px-4 py-2.5 rounded-xl border transition-colors ${selected === i ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-slate-200 hover:border-slate-300 text-slate-700'}`}>
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={handleQuizSubmit} disabled={selected === null}
+                      className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium py-2.5 rounded-xl transition-colors">
+                      ส่งคำตอบ
+                    </button>
+                  </div>
+                )}
+
+                {quizState === 'correct' && (
+                  <div className="flex items-center gap-3 text-emerald-600">
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                    <p className="text-sm font-medium">ถูกต้อง! บทเรียนนี้ถูก mark complete แล้ว 🎉</p>
+                  </div>
+                )}
+
+                {quizState === 'wrong' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-red-500">
+                      <XCircle className="w-5 h-5 flex-shrink-0" />
+                      <p className="text-sm font-medium">ไม่ถูกต้อง ลองใหม่อีกครั้ง</p>
+                    </div>
+                    <button onClick={() => { setQuizState('show'); setSelected(null); }}
+                      className="w-full border border-slate-200 text-slate-600 text-sm font-medium py-2 rounded-xl hover:bg-slate-50">
+                      ลองใหม่
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -118,21 +187,15 @@ export default function CourseLessons({ courseId, enrollmentId, isEnrolled, onPr
             const isActive = activeLesson?.lesson_id === lesson.lesson_id;
             const locked = !isEnrolled && i > 0;
             return (
-              <button
-                key={lesson.lesson_id}
-                onClick={() => !locked && setActiveLesson(lesson)}
-                disabled={locked}
-                className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${isActive ? 'bg-violet-50' : 'hover:bg-slate-50'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
+              <button key={lesson.lesson_id} onClick={() => !locked && selectLesson(lesson)} disabled={locked}
+                className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${isActive ? 'bg-violet-50' : 'hover:bg-slate-50'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 <div className="flex-shrink-0 mt-0.5">
                   {locked ? <Lock className="w-4 h-4 text-slate-300" /> :
                    done ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> :
                    <Circle className={`w-4 h-4 ${isActive ? 'text-violet-500' : 'text-slate-300'}`} />}
                 </div>
                 <div className="min-w-0">
-                  <p className={`text-xs font-medium truncate ${isActive ? 'text-violet-700' : 'text-slate-700'}`}>
-                    {i + 1}. {lesson.title}
-                  </p>
+                  <p className={`text-xs font-medium truncate ${isActive ? 'text-violet-700' : 'text-slate-700'}`}>{i + 1}. {lesson.title}</p>
                   {lesson.duration && <p className="text-xs text-slate-400 mt-0.5">{lesson.duration}</p>}
                 </div>
               </button>

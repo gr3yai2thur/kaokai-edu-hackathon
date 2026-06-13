@@ -18,6 +18,7 @@ import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import AdminCourses from '@/pages/AdminCourses';
+import AdminLessons from '@/pages/AdminLessons';
 import RewardsStore from '@/pages/RewardsStore';
 import PageNotFound from '@/lib/PageNotFound';
 import '@/index.css';
@@ -43,6 +44,7 @@ createRoot(document.getElementById('root')).render(
                   <Route path="/users" element={<Users />} />
                   <Route path="/users/:id" element={<UserDetail />} />
                   <Route path="/admin/courses" element={<AdminCourses />} />
+                  <Route path="/admin/courses/:courseId/lessons" element={<AdminLessons />} />
                 </Route>
               </Route>
             </Route>

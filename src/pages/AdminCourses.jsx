@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useCourses } from '@/hooks/useCourses';
@@ -77,6 +78,9 @@ export default function AdminCourses() {
                 <td className="px-5 py-3 text-center text-slate-500">{course.total_lessons}</td>
                 <td className="px-5 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">
+                    <Link to={`/admin/courses/${course.course_id}/lessons`} className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors" title="Manage Lessons">
+                      <BookOpen className="w-4 h-4" />
+                    </Link>
                     <button onClick={() => openEdit(course)} className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors">
                       <Pencil className="w-4 h-4" />
                     </button>
