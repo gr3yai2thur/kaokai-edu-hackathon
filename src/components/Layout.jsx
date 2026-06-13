@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut, Award } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
@@ -8,7 +8,9 @@ import AiChat from './AiChat';
 const allNavItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/courses', label: 'Courses', icon: BookOpen },
+  { path: '/rewards', label: 'Rewards Store', icon: Award },
   { path: '/users', label: 'Users', icon: Users, adminOnly: true },
+  { path: '/admin/courses', label: 'Manage Courses', icon: BookOpen, adminOnly: true },
 ];
 
 export default function Layout() {

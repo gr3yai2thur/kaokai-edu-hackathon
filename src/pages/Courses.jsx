@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { courses, getCategoryFromTitle, getLevelFromTitle } from '@/lib/dataHelpers';
+import { courses as staticCourses, getCategoryFromTitle, getLevelFromTitle } from '@/lib/dataHelpers';
 import { Search, BookOpen, Users, ChevronRight, Filter, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { useEnrollment, calcCoursePoints } from '@/hooks/useEnrollment';
 import { useAllEnrollments } from '@/hooks/useAllEnrollments';
+import { useCourses } from '@/hooks/useCourses';
 
 const CATEGORY_COLORS = {
   Programming: 'bg-blue-100 text-blue-700',
@@ -26,6 +27,7 @@ export default function Courses() {
   const { user, refreshProfile } = useAuth();
   const { enrollments: myEnrollments, enroll, drop, complete } = useEnrollment(user?.uid);
   const allEnrollments = useAllEnrollments();
+  const courses = useCourses() ?? staticCourses;
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -39,14 +41,14 @@ export default function Courses() {
   const allInstructors = useMemo(() => {
     const set = new Set(courses.map(c => c.instructor));
     return ['All', ...Array.from(set).sort()];
-  }, []);
+  }, [courses]);
 
   const enriched = useMemo(() => courses.map(c => ({
     ...c,
     category: getCategoryFromTitle(c.title),
     level: getLevelFromTitle(c.title),
     enrollmentCount: (allEnrollments ?? []).filter(e => e.course_id === c.course_id).length,
-  })), [allEnrollments]);
+  })), [courses, allEnrollments]);
 
   const filtered = useMemo(() => enriched.filter(c => {
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||

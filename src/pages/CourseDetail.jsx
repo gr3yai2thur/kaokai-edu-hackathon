@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { courses, users, enrollments, getCategoryFromTitle, getLevelFromTitle, getCourseStats } from '@/lib/dataHelpers';
+import { users, enrollments, getCategoryFromTitle, getLevelFromTitle, getCourseStats } from '@/lib/dataHelpers';
 import { ArrowLeft, BookOpen, Users, Award, Clock, TrendingUp, CheckCircle2, XCircle, AlertCircle, Star } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '@/lib/AuthContext';
 import { useEnrollment, calcCoursePoints } from '@/hooks/useEnrollment';
+import { useCourses } from '@/hooks/useCourses';
+import CourseLessons from '@/components/CourseLessons';
 
 const STATUS_COLORS = { COMPLETED: '#7c3aed', IN_PROGRESS: '#2563eb', NOT_STARTED: '#94a3b8', DROPPED: '#ef4444' };
 const STATUS_LABELS = { COMPLETED: 'Completed', IN_PROGRESS: 'In Progress', NOT_STARTED: 'Not Started', DROPPED: 'Dropped' };
@@ -20,8 +22,10 @@ export default function CourseDetail() {
   const { user, refreshProfile, isAdmin } = useAuth();
   const { enrollments: myEnrollments, enroll, drop, complete } = useEnrollment(user?.uid);
   const [actionLoading, setActionLoading] = useState(false);
+  const allCourses = useCourses();
+  const [lessonCount, setLessonCount] = useState(null); // null = unknown, 0 = no lessons
 
-  const course = courses.find(c => c.course_id === id);
+  const course = allCourses?.find(c => c.course_id === id);
 
   if (!course) {
     return (
@@ -111,10 +115,12 @@ export default function CourseDetail() {
                     <div className="h-full bg-white rounded-full transition-all" style={{ width: `${myEnrollment.progress_percent}%` }} />
                   </div>
                 </div>
-                <button disabled={actionLoading} onClick={() => handleAction('complete')}
-                  className="bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors">
-                  {actionLoading ? '...' : '✓ เรียนจบแล้ว'}
-                </button>
+                {lessonCount === 0 && (
+                  <button disabled={actionLoading} onClick={() => handleAction('complete')}
+                    className="bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors">
+                    {actionLoading ? '...' : '✓ เรียนจบแล้ว'}
+                  </button>
+                )}
                 <button disabled={actionLoading} onClick={() => handleAction('drop')}
                   className="bg-white/10 hover:bg-white/20 disabled:opacity-60 text-white text-sm px-4 py-2.5 rounded-xl transition-colors">
                   Drop
@@ -128,6 +134,21 @@ export default function CourseDetail() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Lessons + Video Player */}
+      <div className="mb-6">
+        <h2 className="font-semibold text-slate-800 mb-4">เนื้อหาคอร์ส</h2>
+        <CourseLessons
+          courseId={id}
+          enrollmentId={myStatus ? `${user?.uid}_${id}` : null}
+          isEnrolled={!!myStatus && myStatus !== 'DROPPED'}
+          onProgressUpdate={(progress) => {
+            if (progress >= 100 && myStatus === 'IN_PROGRESS') {
+              handleAction('complete');
+            }
+          }}
+        />
       </div>
 
       {/* Admin-only analytics */}
