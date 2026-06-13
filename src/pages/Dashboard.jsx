@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { users, courses, enrollments, getTopCoursesByEnrollment, getStatusBreakdown, getInstructorStats, getCategoryFromTitle } from '@/lib/dataHelpers';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
 import { Users, BookOpen, TrendingUp, Award, ArrowRight, CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const STATUS_COLORS = {
   COMPLETED: '#7c3aed',
@@ -34,6 +36,34 @@ function KPICard({ icon: Icon, label, value, sub, color }) {
 }
 
 export default function Dashboard() {
+  const [firestoreUsers, setFirestoreUsers] = useState([]);
+
+  useEffect(() => {
+    getDocs(collection(db, 'users'))
+      .then(snapshot => {
+        const fsUsers = snapshot.docs
+          .map(d => {
+            const data = d.data();
+            const pts = data.loyalty_points || 0;
+            return {
+              user_id: d.id,
+              name: data.name || data.email?.split('@')[0] || 'Unknown User',
+              email: data.email || '',
+              phone: data.phone || '',
+              loyalty_points: pts,
+              role: pts >= 1000 ? 'VIP' : 'MEMBER',
+              isAdmin: data.role === 'admin',
+            };
+          })
+          .filter(fu => !fu.isAdmin)
+          .filter(fu => !users.some(mu => mu.email === fu.email));
+        setFirestoreUsers(fsUsers);
+      })
+      .catch(err => console.error("Dashboard error fetching users:", err));
+  }, []);
+
+  const allUsers = useMemo(() => [...users, ...firestoreUsers], [firestoreUsers]);
+
   const statusBreakdown = useMemo(() => getStatusBreakdown(), []);
   const topCourses = useMemo(() => getTopCoursesByEnrollment(6), []);
   const instructorStats = useMemo(() => getInstructorStats().slice(0, 5), []);
@@ -60,8 +90,8 @@ export default function Dashboard() {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, []);
 
-  const vipCount = users.filter(u => u.role === 'VIP').length;
-  const avgLoyalty = Math.round(users.reduce((s, u) => s + u.loyalty_points, 0) / users.length);
+  const vipCount = useMemo(() => allUsers.filter(u => u.role === 'VIP').length, [allUsers]);
+  const avgLoyalty = useMemo(() => allUsers.length > 0 ? Math.round(allUsers.reduce((s, u) => s + u.loyalty_points, 0) / allUsers.length) : 0, [allUsers]);
 
   const top10CoursesBarData = useMemo(() => getTopCoursesByEnrollment(10).map(({ course, enrollmentCount }) => ({
     name: course?.title?.length > 22 ? course.title.slice(0, 22) + '…' : course?.title,
@@ -86,7 +116,7 @@ export default function Dashboard() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <KPICard icon={Users} label="Total Users" value={users.length} sub={`${vipCount} VIP`} color="bg-gradient-to-br from-violet-500 to-violet-700" />
+        <KPICard icon={Users} label="Total Users" value={allUsers.length} sub={`${vipCount} VIP`} color="bg-gradient-to-br from-violet-500 to-violet-700" />
         <KPICard icon={BookOpen} label="Total Courses" value={courses.length} sub="50 active" color="bg-gradient-to-br from-blue-500 to-blue-700" />
         <KPICard icon={TrendingUp} label="Enrollments" value={enrollments.length} sub={`${statusBreakdown.IN_PROGRESS} in progress`} color="bg-gradient-to-br from-emerald-500 to-emerald-700" />
         <KPICard icon={Award} label="Completion Rate" value={`${completionRate}%`} sub={`${statusBreakdown.COMPLETED} completed`} color="bg-gradient-to-br from-amber-500 to-orange-600" />

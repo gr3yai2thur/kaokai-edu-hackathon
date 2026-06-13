@@ -32,8 +32,10 @@ export default function Users() {
               phone: data.phone || '',
               loyalty_points: pts,
               role: pts >= 1000 ? 'VIP' : 'MEMBER',
+              isAdmin: data.role === 'admin',
             };
           })
+          .filter(fu => !fu.isAdmin) // Exclude admins
           .filter(fu => !users.some(mu => mu.email === fu.email));
         setFirestoreUsers(fsUsers);
       })
