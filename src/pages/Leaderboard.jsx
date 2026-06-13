@@ -2,20 +2,29 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/AuthContext';
+import { users as staticUsers } from '@/lib/dataHelpers';
 import { Trophy, Award, Flame, Medal } from 'lucide-react';
 
 export default function Leaderboard() {
   const { user } = useAuth();
-  const [users, setUsers] = useState([]);
+  const [ranked, setRanked] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetch = async () => {
       const snap = await getDocs(query(collection(db, 'users'), orderBy('loyalty_points', 'desc'), limit(50)));
-      setUsers(snap.docs
+      const fsUsers = snap.docs
         .map(d => ({ uid: d.id, ...d.data() }))
-        .filter(u => u.role !== 'admin')
-      );
+        .filter(u => u.role !== 'admin');
+
+      // Merge: static JSON users not already in Firestore (match by email)
+      const fsEmails = new Set(fsUsers.map(u => u.email));
+      const extra = staticUsers
+        .filter(u => u.role !== 'admin' && !fsEmails.has(u.email))
+        .map(u => ({ uid: u.user_id, name: u.name, email: u.email, loyalty_points: u.loyalty_points ?? 0, membership_role: u.role === 'VIP' ? 'VIP' : 'MEMBER', streak: 0 }));
+
+      const all = [...fsUsers, ...extra].sort((a, b) => (b.loyalty_points ?? 0) - (a.loyalty_points ?? 0));
+      setRanked(all);
       setLoading(false);
     };
     fetch();
@@ -38,11 +47,11 @@ export default function Leaderboard() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        {users.length === 0 ? (
+        {ranked.length === 0 ? (
           <p className="text-center text-slate-400 py-12">ยังไม่มีข้อมูล</p>
         ) : (
           <div>
-            {users.map((u, i) => {
+            {ranked.map((u, i) => {
               const isMe = u.uid === user?.uid;
               return (
                 <div
