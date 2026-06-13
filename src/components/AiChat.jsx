@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles } from 'lucide-react';
 import { courses, enrollments, users, getCategoryFromTitle, getLevelFromTitle, getTopCoursesByEnrollment, getStatusBreakdown } from '@/lib/dataHelpers';
 import { cn } from '@/lib/utils';
+import { GoogleGenAI } from '@google/genai';
 
 function buildSystemContext() {
   const topCourses = getTopCoursesByEnrollment(5).map(({ course, enrollmentCount }) =>
@@ -40,15 +41,13 @@ const SUGGESTIONS = [
   'อัตราการเรียนจบเป็นเท่าไร?',
 ];
 
-import { GoogleGenAI } from '@google/genai';
-
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 async function callAI(prompt) {
   if (!GEMINI_API_KEY) throw new Error('NO_API_KEY');
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-flash-latest',
     contents: prompt,
   });
   return response.text;
