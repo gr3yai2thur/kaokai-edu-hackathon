@@ -5,7 +5,7 @@ import { useCourses } from '@/hooks/useCourses';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { db } from '@/lib/firebase';
-import { UserCircle, Award, BookOpen, CheckCircle2, Flame, Star, Edit2, Check, X } from 'lucide-react';
+import { Award, BookOpen, CheckCircle2, Flame, Star, Edit2, Check, X } from 'lucide-react';
 
 const BADGE_META = {
   badge_scholar: { label: 'Scholar', icon: BookOpen, cls: 'bg-blue-100 text-blue-700' },

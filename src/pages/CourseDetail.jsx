@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { users, enrollments, getCategoryFromTitle, getLevelFromTitle, getCourseStats } from '@/lib/dataHelpers';
-import { ArrowLeft, BookOpen, Users, Award, Clock, TrendingUp, CheckCircle2, XCircle, AlertCircle, Star, Download } from 'lucide-react';
+import { ArrowLeft, BookOpen, Users, Clock, TrendingUp, CheckCircle2, XCircle, AlertCircle, Star, Download } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '@/lib/AuthContext';
 import { useEnrollment, calcCoursePoints } from '@/hooks/useEnrollment';

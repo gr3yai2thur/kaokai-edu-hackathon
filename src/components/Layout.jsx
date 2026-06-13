@@ -1,12 +1,12 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut, Award, Star, Zap, Flame, Trophy, Search, UserCircle } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, Menu, X, GraduationCap, LogOut, Award, Star, Flame, Trophy, Search, UserCircle } from 'lucide-react';
 
 const BADGE_META = {
   badge_scholar: { label: 'Scholar', icon: BookOpen, cls: 'bg-blue-50 text-blue-600' },
   badge_achiever: { label: 'Achiever', icon: Award, cls: 'bg-amber-50 text-amber-600' },
   badge_elite: { label: 'Elite', icon: Star, cls: 'bg-violet-50 text-violet-600' },
 };
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
 import { useEnrollment } from '@/hooks/useEnrollment';
