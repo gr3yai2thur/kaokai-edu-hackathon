@@ -16,7 +16,7 @@ const allNavItems = [
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, profile } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navItems = allNavItems.filter(item => !item.adminOnly || isAdmin);
 
@@ -63,6 +63,15 @@ export default function Layout() {
             <div className="px-2">
               <p className="text-xs font-medium text-slate-700 truncate">{user.displayName || user.email}</p>
               <p className="text-xs text-slate-400 truncate">{user.email}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg">
+                  <Award className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-xs font-semibold text-amber-600">{profile?.loyalty_points ?? 0} pts</span>
+                </div>
+                {profile?.membership_role === 'VIP' && (
+                  <span className="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-lg">VIP</span>
+                )}
+              </div>
             </div>
           )}
           <button

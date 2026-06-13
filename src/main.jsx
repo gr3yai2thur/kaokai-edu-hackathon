@@ -18,6 +18,7 @@ import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import AdminCourses from '@/pages/AdminCourses';
+import RewardsStore from '@/pages/RewardsStore';
 import PageNotFound from '@/lib/PageNotFound';
 import '@/index.css';
 
@@ -37,6 +38,7 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/courses/:id" element={<CourseDetail />} />
+                <Route path="/rewards" element={<RewardsStore />} />
                 <Route element={<AdminRoute />}>
                   <Route path="/users" element={<Users />} />
                   <Route path="/users/:id" element={<UserDetail />} />
