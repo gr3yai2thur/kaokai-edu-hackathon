@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { users, enrollments, getUserStats } from '@/lib/dataHelpers';
+import { users, getUserStats } from '@/lib/dataHelpers';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { Search, Users as UsersIcon, Star, Filter, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -13,11 +15,36 @@ export default function Users() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
   const [sortBy, setSortBy] = useState('name');
+  const [firestoreUsers, setFirestoreUsers] = useState([]);
 
-  const enriched = useMemo(() => users.map(u => ({
+  useEffect(() => {
+    getDocs(collection(db, 'users'))
+      .then(snapshot => {
+        const fsUsers = snapshot.docs
+          .map(d => {
+            const data = d.data();
+            const pts = data.loyalty_points || 0;
+            return {
+              user_id: d.id,
+              name: data.name || '',
+              email: data.email || '',
+              phone: data.phone || '',
+              loyalty_points: pts,
+              role: pts >= 1000 ? 'VIP' : 'MEMBER',
+            };
+          })
+          .filter(fu => !users.some(mu => mu.email === fu.email));
+        setFirestoreUsers(fsUsers);
+      })
+      .catch(() => {});
+  }, []);
+
+  const allUsers = useMemo(() => [...users, ...firestoreUsers], [firestoreUsers]);
+
+  const enriched = useMemo(() => allUsers.map(u => ({
     ...u,
     ...getUserStats(u.user_id),
-  })), []);
+  })), [allUsers]);
 
   const filtered = useMemo(() => {
     let result = enriched.filter(u => {
@@ -36,14 +63,14 @@ export default function Users() {
     return result;
   }, [enriched, search, roleFilter, sortBy]);
 
-  const vipCount = users.filter(u => u.role === 'VIP').length;
-  const memberCount = users.filter(u => u.role === 'MEMBER').length;
+  const vipCount = allUsers.filter(u => u.role === 'VIP').length;
+  const memberCount = allUsers.filter(u => u.role === 'MEMBER').length;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-800">Users</h1>
-        <p className="text-slate-500 text-sm mt-1">{filtered.length} of {users.length} users</p>
+        <p className="text-slate-500 text-sm mt-1">{filtered.length} of {allUsers.length} users</p>
       </div>
 
       {/* Role summary cards */}

@@ -1,5 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { users, courses, enrollments, getUserStats } from '@/lib/dataHelpers';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { ArrowLeft, Mail, Phone, Star, BookOpen, TrendingUp, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
 
 const STATUS_BADGE = {
@@ -12,7 +15,43 @@ const STATUS_LABELS = { COMPLETED: 'Completed', IN_PROGRESS: 'In Progress', NOT_
 
 export default function UserDetail() {
   const { id } = useParams();
-  const user = users.find(u => u.user_id === id);
+  const [fsUser, setFsUser] = useState(null);
+  const [loadingFs, setLoadingFs] = useState(false);
+
+  useEffect(() => {
+    const isMockUser = users.some(u => u.user_id === id);
+    if (!isMockUser) {
+      setFsUser(null);
+      setLoadingFs(true);
+      getDoc(doc(db, 'users', id))
+        .then(snap => {
+          if (snap.exists()) {
+            const data = snap.data();
+            const pts = data.loyalty_points || 0;
+            setFsUser({
+              user_id: id,
+              name: data.name || '',
+              email: data.email || '',
+              phone: data.phone || '',
+              loyalty_points: pts,
+              role: pts >= 1000 ? 'VIP' : 'MEMBER',
+            });
+          }
+          setLoadingFs(false);
+        })
+        .catch(() => setLoadingFs(false));
+    }
+  }, [id]);
+
+  const mockUser = users.find(u => u.user_id === id);
+
+  if (!mockUser && loadingFs) return (
+    <div className="p-6 flex justify-center py-20">
+      <div className="w-8 h-8 border-4 border-slate-200 border-t-violet-600 rounded-full animate-spin" />
+    </div>
+  );
+
+  const user = mockUser || fsUser;
 
   if (!user) {
     return (
