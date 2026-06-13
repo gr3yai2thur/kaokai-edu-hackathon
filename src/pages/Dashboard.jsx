@@ -139,8 +139,10 @@ export default function Dashboard() {
         {[
           { label: 'Completed', value: statusBreakdown.COMPLETED, icon: CheckCircle2, color: 'text-violet-600 bg-violet-50' },
           { label: 'In Progress', value: statusBreakdown.IN_PROGRESS, icon: Clock, color: 'text-blue-600 bg-blue-50' },
-          { label: 'Not Started', value: statusBreakdown.NOT_STARTED, icon: AlertCircle, color: 'text-slate-500 bg-slate-100' },
-          { label: 'Dropped', value: statusBreakdown.DROPPED, icon: XCircle, color: 'text-red-500 bg-red-50' },
+          ...(isAdmin ? [
+            { label: 'Not Started', value: statusBreakdown.NOT_STARTED, icon: AlertCircle, color: 'text-slate-500 bg-slate-100' },
+            { label: 'Dropped', value: statusBreakdown.DROPPED, icon: XCircle, color: 'text-red-500 bg-red-50' },
+          ] : []),
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className={`rounded-xl p-4 flex items-center gap-3 ${color}`}>
             <Icon className="w-5 h-5" />
