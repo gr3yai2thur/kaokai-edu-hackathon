@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, googleProvider, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,16 @@ export default function Register() {
     setLoading(true);
     try {
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(user, { displayName: email.split("@")[0] });
+      const displayName = email.split("@")[0];
+      await updateProfile(user, { displayName });
+      await setDoc(doc(db, 'users', user.uid), {
+        name: displayName,
+        email: user.email,
+        phone: '',
+        loyalty_points: 0,
+        membership_role: 'MEMBER',
+        role: 'user',
+      });
       navigate("/");
     } catch (err) {
       setError(err.code === "auth/email-already-in-use" ? "Email already in use" : err.message);

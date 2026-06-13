@@ -1,12 +1,13 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [role, setRole] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -16,15 +17,34 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         setIsAuthenticated(true);
-        // fetch role from Firestore
         try {
-          const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
-          setRole(snap.exists() ? snap.data().role : 'user');
+          const docRef = doc(db, 'users', firebaseUser.uid);
+          const snap = await getDoc(docRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            setRole(data.role || 'user');
+            setProfile(data);
+          } else {
+            // First-time login (e.g. Google) → auto-create profile
+            const newProfile = {
+              name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+              email: firebaseUser.email,
+              phone: '',
+              loyalty_points: 0,
+              membership_role: 'MEMBER',
+              role: 'user',
+            };
+            await setDoc(docRef, newProfile);
+            setRole('user');
+            setProfile(newProfile);
+          }
         } catch {
           setRole('user');
+          setProfile(null);
         }
       } else {
         setUser(null);
+        setProfile(null);
         setIsAuthenticated(false);
         setRole(null);
       }
@@ -38,7 +58,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, isAdmin: role === 'admin', isAuthenticated, isLoadingAuth, logout }}>
+    <AuthContext.Provider value={{ user, profile, role, isAdmin: role === 'admin', isAuthenticated, isLoadingAuth, logout }}>
       {children}
     </AuthContext.Provider>
   );
