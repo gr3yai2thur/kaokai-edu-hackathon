@@ -156,6 +156,7 @@ export default function Dashboard() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {isAdmin && (
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h2 className="font-semibold text-slate-800 mb-4">Enrollment Status</h2>
           <ResponsiveContainer width="100%" height={220}>
@@ -168,6 +169,7 @@ export default function Dashboard() {
             </PieChart>
           </ResponsiveContainer>
         </div>
+        )}
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h2 className="font-semibold text-slate-800 mb-4">Courses by Category</h2>
@@ -184,6 +186,7 @@ export default function Dashboard() {
 
       {/* Student Summary + Course Popularity */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+        {isAdmin && (
         <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h2 className="font-semibold text-slate-800 mb-1">นักเรียนทั้งหมด</h2>
           <p className="text-xs text-slate-400 mb-4">สรุปจำนวนนักเรียนตามสถานะ</p>
@@ -207,8 +210,9 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+        )}
 
-        <div className="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+        <div className={`${isAdmin ? 'lg:col-span-3' : 'lg:col-span-5'} bg-white rounded-2xl p-6 shadow-sm border border-slate-100`}>
           <div className="flex items-center justify-between mb-1">
             <h2 className="font-semibold text-slate-800">ความนิยมของคอร์ส</h2>
             <Link to="/courses" className="text-xs text-violet-600 hover:underline flex items-center gap-1">ดูทั้งหมด <ArrowRight className="w-3 h-3" /></Link>
