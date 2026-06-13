@@ -45,16 +45,6 @@ const REWARDS = [
     border: 'border-emerald-100',
     type: 'ai_boost',
   },
-  {
-    id: 'cert_token',
-    title: 'Certificate Token',
-    desc: 'ใช้ดาวน์โหลด Certificate PDF 1 ใบ (คอร์สใดก็ได้)',
-    points: 500,
-    icon: Gift,
-    color: 'bg-rose-50 text-rose-600',
-    border: 'border-rose-100',
-    type: 'cert_token',
-  },
 ];
 
 export default function RewardsStore() {
@@ -65,7 +55,6 @@ export default function RewardsStore() {
   const vipProgress = Math.min(100, Math.round((pts / 1000) * 100));
 
   const redeemedBadges = profile?.badges ?? [];
-  const certTokens = profile?.cert_tokens ?? 0;
   const aiBoostUntil = profile?.ai_boost_until ? new Date(profile.ai_boost_until) : null;
   const aiActive = aiBoostUntil && aiBoostUntil > new Date();
 
@@ -80,7 +69,7 @@ export default function RewardsStore() {
   const isRedeemed = (reward) => {
     if (reward.type === 'badge') return redeemedBadges.includes(reward.id);
     if (reward.type === 'ai_boost') return aiActive;
-    return false; // cert_token can be redeemed multiple times
+    return false;
   };
 
   const handleRedeem = async (reward) => {
@@ -101,8 +90,6 @@ export default function RewardsStore() {
         const until = new Date();
         until.setDate(until.getDate() + 7);
         updates.ai_boost_until = until.toISOString();
-      } else if (reward.type === 'cert_token') {
-        updates.cert_tokens = (snap.data()?.cert_tokens ?? 0) + 1;
       }
 
       await updateDoc(userRef, updates);
@@ -168,7 +155,7 @@ export default function RewardsStore() {
       </div>
 
       {/* My Items */}
-      {(redeemedBadges.length > 0 || certTokens > 0 || aiActive) && (
+      {(redeemedBadges.length > 0 || aiActive) && (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 mb-6">
           <h2 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" /> ของรางวัลที่มี
@@ -185,11 +172,6 @@ export default function RewardsStore() {
             {aiActive && (
               <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
                 <Zap className="w-3.5 h-3.5" /> AI Boost (หมด {aiBoostUntil.toLocaleDateString('th-TH')})
-              </span>
-            )}
-            {certTokens > 0 && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-rose-50 text-rose-700 border border-rose-100">
-                <Gift className="w-3.5 h-3.5" /> Certificate Token × {certTokens}
               </span>
             )}
           </div>
